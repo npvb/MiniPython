@@ -1,0 +1,11 @@
+def ValidarCadena(cadena):
+    pattern="xyz"
+    validacion=match(pattern, cadena)
+    return validacion
+
+if __name__== "__main__":
+ cadena=raw_input("Ingrese Cadena a Evaluar")
+if ValidarCadena(cadena):
+    print "Expresion Correcta"
+else:
+    print "Expresion Incorrecta"

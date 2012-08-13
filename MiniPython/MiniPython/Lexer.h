@@ -1,15 +1,18 @@
 #include "Token.h"
 #include <map>
 #include <ctype.h>
+#include <vector>
 
 class Lexer
 {
 public:
 	long size_archivo;
 	long posicion;
+	int nivelIdentacion;
 	string nombre_archivo;
 	FILE *pFile;
 	char simbolo;
+	vector<int>Pila_Identacion;
 	map<string,TokenType> MapOperadores;
 	map<string,TokenType> MapPalabrasReservadas;
 
@@ -70,6 +73,8 @@ public:
 		pFile = fopen(archivo.c_str(),"r+");
 		fseek (pFile, 0, SEEK_END);
 		size_archivo = ftell (pFile);	
+		nivelIdentacion = 0;
+		Pila_Identacion.push_back(nivelIdentacion);
 	
 	}
 
@@ -154,7 +159,7 @@ public:
 			{
 				#pragma region CASE 0
 				case 0:
-					if(isspace(simbolo) || simbolo == ' ' || simbolo == '\n' || simbolo == '\t')
+					if(simbolo == ' ' || simbolo == '\n')
 					{
 						estado = 0;
 						simbolo = NextSymbol();
@@ -219,8 +224,15 @@ public:
 						lexema+=simbolo;
 						simbolo = NextSymbol();
 
+					}else if(simbolo == '\t')
+					{
+						estado = 18;
+						nivelIdentacion++;
+						simbolo = NextSymbol();
+
 					}else if(simbolo == '\0')
 					{
+
 						return Token("EOFF",TokenType::EOFF);
 
 					}else
@@ -428,7 +440,60 @@ public:
 					return Token(lexema,TokenType::OP_RANGO);
 				#pragma endregion OPERADOR ...
 
+				#pragma region CASE 18
+				case 18:
+					if(simbolo == '\t')
+					{
+						estado = 18;
+						nivelIdentacion++;
+						simbolo = NextSymbol();
+					}else 
+					{
+						if(nivelIdentacion > Pila_Identacion.back())
+						{
+							Pila_Identacion.push_back(nivelIdentacion);
+							nivelIdentacion = 0;
+							return Token("INDENT",TokenType::OP_IDENT);
 
+						}else if (nivelIdentacion < Pila_Identacion.back())
+						{	
+							vector<int>Pila2;
+							//Pila2.push_back(0);
+
+							int pos = 0;
+							for(int x = 0;x<Pila_Identacion.size();x++)
+							{
+								if(nivelIdentacion == Pila_Identacion[x])
+								{
+									pos = x;
+									break;
+								}
+							}
+							
+							if(pos>0)
+							{
+								for(int x = 0;x<=pos;x++)
+								{
+									Pila2.push_back(Pila_Identacion[x]);
+								}
+								Pila_Identacion = Pila2;
+
+								nivelIdentacion = 0;
+								return Token("DEDENT",TokenType::OP_DEDENT);
+							}else 
+							{
+								throw exception("Lexer: Error de Indentacion");
+							}
+						}else
+						{
+							/*NOTHING HAPPENS!!*/
+							nivelIdentacion = 0;
+							estado = 0;
+						}
+
+					}
+					break;
+				#pragma endregion INDENT
 
 			}	
 		}

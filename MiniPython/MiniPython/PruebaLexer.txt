@@ -1,11 +1,7 @@
-def ValidarCadena(cadena):
-    pattern="xyz"
-    validacion=match(pattern, cadena)
-    return validacion
-
-if __name__== "__main__":
- cadena=raw_input("Ingrese Cadena a Evaluar")
-if ValidarCadena(cadena):
-    print "Expresion Correcta"
-else:
-    print "Expresion Incorrecta"
+	def perm(l):
+for i in range(len(l)):
+	s = l[:i] + l[i+1:]
+		p = perm(l[:i] + l[i+1:])
+		for x in p:
+				append(l[i:i+1] + x)
+			return r

@@ -9,7 +9,7 @@ using namespace std;
 int main()
 {
 	try{
-		Lexer lx("PruebaLexer.txt");
+		Lexer lx("PruebaPython.txt");
 		Token t;
 
 		while(t.Tipo!=TokenType::EOFF)

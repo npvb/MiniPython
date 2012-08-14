@@ -9,7 +9,6 @@ public:
 	long size_archivo;
 	long posicion;
 	int nivelIdentacion;
-	string nombre_archivo;
 	FILE *pFile;
 	char simbolo;
 	vector<int>Pila_Identacion;
@@ -68,7 +67,6 @@ public:
 	Lexer(string archivo)
 	{
 		InitMaps();
-		nombre_archivo = archivo;
 		posicion = 0;
 		pFile = fopen(archivo.c_str(),"r+");
 		fseek (pFile, 0, SEEK_END);
@@ -264,13 +262,6 @@ public:
 						estado = 2;
 						lexema+=simbolo;
 						simbolo = NextSymbol();
-
-					}else if (simbolo == '.')
-					{
-						estado = 3;
-						lexema+=simbolo;
-						simbolo = NextSymbol();
-
 					}else
 						return Token(lexema,TokenType::LIT_NUM_INT);
 				break;
@@ -283,6 +274,12 @@ public:
 						estado = 4;
 						lexema+=simbolo;
 						simbolo = NextSymbol();
+					}else if(simbolo == '.')
+					{
+						estado = 0;
+						lexema+=simbolo;
+						simbolo = NextSymbol();
+						
 					}else
 						throw exception("Se Esperaba Un Digito");
 					break;
@@ -482,7 +479,7 @@ public:
 								return Token("DEDENT",TokenType::OP_DEDENT);
 							}else 
 							{
-								throw exception("Lexer: Error de Indentacion");
+								throw exception("Lexer: Error de Indentacion ");
 							}
 						}else
 						{

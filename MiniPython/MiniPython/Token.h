@@ -47,5 +47,9 @@ public:
 		Tipo = tip;
 	}
 	
+	TokenType getTipo()
+	{
+		return Tipo;
+	}
 
 };

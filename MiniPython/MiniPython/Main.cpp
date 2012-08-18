@@ -18,18 +18,6 @@ int main()
 		}
 
 
-
-	/*	Lexer lx("PruebaPython.txt");
-		Token t;
-
-		while(t.Tipo!=TokenType::EOFF)
-		{
-			t = lx.NextToken();
-			cout<<"Lexema: "<<t.lexema;
-			cout<<" Tipo: "<<t.Tipo<<endl;
-			
-		}*/
-
 	}catch(exception err){
 		cout<<err.what()<<endl;
 	}

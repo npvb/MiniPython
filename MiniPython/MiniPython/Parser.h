@@ -664,13 +664,11 @@ public:
 			#pragma endregion
 
 			#pragma region CONSTANT & EXPR <OP_BIN> EXPR
-			}
-			if (Numero() || Boolean() /*¿¿charconstant??*/)
+			}if (Numero() || Boolean() /*¿¿charconstant??*/)
 			{
 				constant();
 
-			}
-			if(Es_expresion())
+			}else if(Es_expresion())
 			{/*¿No se donde debo consumir el token?*/
 				//expr();
 				op_bin();
@@ -684,7 +682,7 @@ public:
 			#pragma endregion
 
 			#pragma region ( <expr> )
-			}else if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
+			}if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
 			{
 				token = lex->NextToken();
 
@@ -700,8 +698,7 @@ public:
 			#pragma endregion
 
 			#pragma region [ <expr> ]		
-			}
-			if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
+			}else if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
 			{
 				token = lex->NextToken();
 				expr();

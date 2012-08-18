@@ -25,11 +25,16 @@ public:
 
 	bool Boolean()
 	{
-		if(token.getTipo() == TokenType::LIT_FALSE || token.getTipo() == TokenType::LIT_TRUE)
+		switch(token.Tipo)
 		{
-			return true;
-		}else
-			return false;
+			case TokenType::LIT_FALSE:
+			case TokenType::LIT_TRUE:
+				return true;
+
+			default: 
+				return false;
+		}
+
 	}
 
 	bool Es_expresion()
@@ -46,6 +51,9 @@ public:
 		case TokenType::OP_NEGACION:
 		case TokenType::SIGNO_PARENTESIS_IZQ:
 		case TokenType::SIGNO_BRACKET_IZQ:
+
+		case TokenType::OP_IGUAL_IGUAL:
+		case TokenType::OP_MOD:
 			/*No se si deba incluir lo de op_bin en Es_expr*/
 			return true;
 
@@ -309,8 +317,9 @@ public:
 
 					if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 					{
-						block();
 						token = lex->NextToken();
+						block();
+						
 
 						while(token.getTipo() == TokenType::KW_ELIF)
 						{
@@ -333,6 +342,7 @@ public:
 
 							if(token.getTipo() ==TokenType::SIGN_DOSPUNTOS)
 							{
+								token = lex->NextToken();
 								block();
 							}else 
 							{
@@ -397,6 +407,7 @@ public:
 			#pragma region RETURN_STATEMENT
 				}else if(token.getTipo() == TokenType::KW_RETURN)
 				{
+					token = lex->NextToken();
 					expr();
 				
 			#pragma endregion

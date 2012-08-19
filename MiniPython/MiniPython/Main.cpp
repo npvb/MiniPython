@@ -22,8 +22,6 @@ int main()
 		cout<<err.what()<<endl;
 	}
 
-	//cout<<"Compilacion Exitosa!"<<endl;
-
 	system("pause");
 	return 0;
 }

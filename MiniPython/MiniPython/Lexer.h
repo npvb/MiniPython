@@ -9,6 +9,8 @@ public:
 	long size_archivo;
 	long posicion;
 	int nivelIdentacion;
+	int fila;
+	int columna;
 	FILE *pFile;
 	char simbolo;
 	vector<int>Pila_Identacion;
@@ -68,6 +70,8 @@ public:
 	{
 		InitMaps();
 		posicion = 0;
+		fila = 1;
+		columna = 1;
 		pFile = fopen(archivo.c_str(),"r+");
 		fseek (pFile, 0, SEEK_END);
 		size_archivo = ftell (pFile);	
@@ -87,6 +91,14 @@ public:
 				int caracter = fgetc(pFile);
 			    simbolo = (char)caracter;
 				posicion++;
+
+				columna++;
+
+				if(simbolo == '\n')
+				{
+					columna = 1;
+					fila++;
+				}
 
 				return simbolo;
 
@@ -230,8 +242,14 @@ public:
 
 					}else if(simbolo == '\0')
 					{
-
-						return Token("EOFF",TokenType::EOFF);
+						if(Pila_Identacion.back() == 0)
+						{
+							return Token("EOFF",TokenType::EOFF);
+						}else
+						{
+							Pila_Identacion.pop_back();
+							return Token("DEDENT",TokenType::OP_DEDENT);
+						}
 
 					}else
 						

@@ -1,5 +1,7 @@
 #include "Token.h"
 #include <map>
+#include <sstream>
+#include <iostream>
 #include <ctype.h>
 #include <vector>
 
@@ -18,6 +20,13 @@ public:
 	map<string,TokenType> MapPalabrasReservadas;
 
 	Lexer(){}
+
+	exception PythonError()
+	{
+		stringstream msg;
+		msg << "Caracter "<<simbolo<<" Invalido.\nLinea: "<<fila<<" Columna: "<<columna<<endl;
+		throw exception(msg.str().c_str());
+	}
 
 	void InitMaps()
 	{
@@ -84,6 +93,7 @@ public:
 	{
 		try
         {
+			columna++;
 			char simbolo;
 			if(posicion<size_archivo)
 			{
@@ -92,15 +102,16 @@ public:
 			    simbolo = (char)caracter;
 				posicion++;
 
-				columna++;
-
-				if(simbolo == '\n')
+				if(simbolo == 10)
 				{
 					columna = 1;
 					fila++;
+
 				}
 
 				return simbolo;
+
+				
 
 			} else {
 				
@@ -244,16 +255,16 @@ public:
 					{
 						if(Pila_Identacion.back() == 0)
 						{
-							return Token("EOFF",TokenType::EOFF);
+							return Token("EOFF",TokenType::EOFF,fila,columna);
 						}else
 						{
 							Pila_Identacion.pop_back();
-							return Token("DEDENT",TokenType::OP_DEDENT);
+							return Token("DEDENT",TokenType::OP_DEDENT,fila,columna);
 						}
 
 					}else
-						
-						throw exception ("Caracter No Valido");
+						//throw exception ("Caracter No Valido");
+						PythonError();
 						break;
 				#pragma endregion estado = 0
 				
@@ -267,9 +278,9 @@ public:
 
 					}else if(MapPalabrasReservadas.count(lexema) > 0)
 					{
-						return Token(lexema,MapPalabrasReservadas[lexema]);
+						return Token(lexema,MapPalabrasReservadas[lexema],fila,columna);
 					}else
-						return Token(lexema,TokenType::ID);
+						return Token(lexema,TokenType::ID,fila,columna);
 					break;
 				#pragma endregion ID
                 
@@ -281,7 +292,7 @@ public:
 						lexema+=simbolo;
 						simbolo = NextSymbol();
 					}else
-						return Token(lexema,TokenType::LIT_NUM_INT);
+						return Token(lexema,TokenType::LIT_NUM_INT,fila,columna);
 				break;
 				#pragma endregion NumerosINT
 
@@ -311,7 +322,7 @@ public:
 						lexema+=simbolo;
 						simbolo = NextSymbol();
 					}else
-						return Token(lexema,TokenType::LIT_NUM_FLOAT);
+						return Token(lexema,TokenType::LIT_NUM_FLOAT,fila,columna);
 					break;
 				#pragma endregion NumerosFloat	
 
@@ -346,12 +357,12 @@ public:
 
 				#pragma region CASE 7
 				case 7:
-					return Token(lexema, TokenType::LIT_CADENA);
+					return Token(lexema, TokenType::LIT_CADENA,fila,columna);
 				#pragma endregion RETORNO STRINGS
 
 				#pragma region CASE 8
 				case 8:
-					return Token(lexema,MapOperadores[lexema]);
+					return Token(lexema,MapOperadores[lexema],fila,columna);
 				#pragma endregion RETORNO OPS_MATS
 
 				#pragma region CASE 9
@@ -364,14 +375,14 @@ public:
 
 					}else
 					{
-						return Token(lexema,MapOperadores[lexema]);
+						return Token(lexema,MapOperadores[lexema],fila,columna);
 						
 					}break;
 				#pragma endregion MENOR o MENOR IGUAL
 
 				#pragma region CASE 10
 				case 10:
-					return Token(lexema,MapOperadores[lexema]);
+					return Token(lexema,MapOperadores[lexema],fila,columna);
 				#pragma endregion RETORNO 
 
 				#pragma region CASE 11
@@ -384,7 +395,7 @@ public:
 
 					}else
 					{
-						return Token(lexema,MapOperadores[lexema]);
+						return Token(lexema,MapOperadores[lexema],fila,columna);
 						
 					}break;
 				#pragma endregion MAYOR O MAYOR IGUAL
@@ -413,14 +424,14 @@ public:
 
 					}else
 					{
-						return Token(lexema,MapOperadores[lexema]);
+						return Token(lexema,MapOperadores[lexema],fila,columna);
 						break;
 					}
 				#pragma endregion IGUAL
 
 				#pragma region CASE 14
 				case 14:
-					return Token(lexema,MapOperadores[lexema]);
+					return Token(lexema,MapOperadores[lexema],fila,columna);
 
 				#pragma endregion OPERADORES DE PUNTUACION
 
@@ -452,7 +463,7 @@ public:
 
 				#pragma region CASE 17
 				case 17:
-					return Token(lexema,TokenType::OP_RANGO);
+					return Token(lexema,TokenType::OP_RANGO,fila,columna);
 				#pragma endregion OPERADOR ...
 
 				#pragma region CASE 18
@@ -468,7 +479,7 @@ public:
 						{
 							Pila_Identacion.push_back(nivelIdentacion);
 							nivelIdentacion = 0;
-							return Token("INDENT",TokenType::OP_IDENT);
+							return Token("INDENT",TokenType::OP_IDENT,fila,columna);
 
 						}else if (nivelIdentacion < Pila_Identacion.back())
 						{	
@@ -494,7 +505,7 @@ public:
 								Pila_Identacion = Pila2;
 
 								nivelIdentacion = 0;
-								return Token("DEDENT",TokenType::OP_DEDENT);
+								return Token("DEDENT",TokenType::OP_DEDENT,fila,columna);
 							}else 
 							{
 								throw exception("Lexer: Error de Indentacion ");

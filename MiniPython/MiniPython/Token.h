@@ -39,12 +39,17 @@ class Token
 public:
 	string lexema;
 	TokenType Tipo;
+	int fila;
+	int columna;
 
 	Token(){}
-	Token(string lex,TokenType tip)
+
+	Token(string lex,TokenType tip,int fil,int col)
 	{
 		lexema = lex;
 		Tipo = tip;
+		fila = fil;
+		columna = col;
 	}
 	
 	TokenType getTipo()

@@ -11,7 +11,6 @@ int main()
 	try{
 
 		Parser par(new Lexer("PruebaPython.txt"));
-
 		while(par.token.getTipo() != TokenType::EOFF)
 		{
 			par.program();

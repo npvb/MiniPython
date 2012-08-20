@@ -1,9 +1,8 @@
-class GreatestCommonDivisor:
-	a = 10
-	b = 20
+class Mini:
+	b = 0
 
-	def main:
-		if b == 0:
-			return a
+	def fibonacci(b):
+		if b==1 or b==0:
+			return b
 		else:
-			return gcd (b, a % b)
+			return b+1 + b+2

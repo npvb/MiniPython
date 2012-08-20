@@ -15,6 +15,7 @@ public:
 	Lexer *lex;
 	Token token;
 
+	#pragma region Support_Functions
 	bool Numero()
 	{
 		if(token.getTipo() == TokenType::LIT_NUM_FLOAT || token.getTipo() == TokenType::LIT_NUM_INT)
@@ -59,6 +60,7 @@ public:
 
 			case TokenType::OP_IGUAL_IGUAL:
 			case TokenType::OP_DISTINTO_DE:
+			case TokenType::OP_NEGACION:
 
 			case TokenType::OP_AND:
 			case TokenType::OP_OR:
@@ -106,6 +108,8 @@ public:
 			case TokenType::OP_MENOR_IGUAL:
 			case TokenType::OP_MAYOR:
 			case TokenType::OP_MAYOR_IGUAL:
+			case TokenType::OP_DISTINTO_DE:
+			case TokenType::OP_IGUAL_IGUAL:
 				return true;
 
 			default:
@@ -166,9 +170,10 @@ public:
 	exception PythonError(string nombre_funcion,string descripcion)
 	{
 		stringstream msg;
-		msg << "Error ->"<<nombre_funcion<<" "<<descripcion<<" en la fila "<<lex->fila<<" columna "<<lex->columna<<endl;
+		msg << "Error de: "<<nombre_funcion<<"-> "<<descripcion<<"\nFila "<<lex->fila<<" Columna "<<lex->columna<<endl;
 		throw exception(msg.str().c_str());
 	}
+	#pragma endregion
 
 	Parser(Lexer *l)
 	{
@@ -209,17 +214,14 @@ public:
 						}
 					}else
 					{
-						//throw exception("program-> Se Esperaba : despues del Nombre de la Clase");
 						throw PythonError("Program","Se Esperaba : despues del Nombre de la Clase");
 					}
 				}else 
 				{
-						//throw exception ("program-> Se Esperaba Nombre de la Clase");
 					throw PythonError("Program","Se Esperaba Nombre de la Clase");
 				}
 			}else
 			{
-					//throw exception ("program-> Se Esperaba la palabra Class al Inicio del Programa");
 				throw PythonError("Program","Se Esperaba la palabra Class al Inicio del Programa");
 
 			}
@@ -269,9 +271,7 @@ public:
 								token = lex->NextToken();
 							}else 
 							{
-								//throw exception("Se Esperaba un ID despues de la coma");
 								throw PythonError("method_decl","Se Esperaba un ID despues de la coma");
-			
 							}
 						}
 
@@ -346,16 +346,17 @@ public:
 						
 						while(token.getTipo() == TokenType::KW_ELIF)
 						{
-							expr();
 							token = lex->NextToken();
+							expr();
+							//token = lex->NextToken();
 
 							if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 							{
+								token = lex->NextToken();
 								block();
 
 							}else 
 							{
-								//throw exception ("IF-> Se Esperaban : al final de la Expresion");
 								throw PythonError("Statement->IF","Se Esperaban : al final de la Expresion");
 							}
 						}
@@ -370,7 +371,6 @@ public:
 								block();
 							}else 
 							{
-								//throw exception("IF-> Se Esperaba : Luego del Else");
 								throw PythonError("Statement->IF->ELSE","Se Esperaba : Luego del Else");
 							}
 						}
@@ -394,9 +394,7 @@ public:
 						block();
 					}else 
 					{
-						//throw exception("While: Se Esperaba : Luego de Expr");
 						throw PythonError("Statement->While","Se Esperaba : Luego de Expr");
-
 					}
 				#pragma endregion 
 					
@@ -420,14 +418,11 @@ public:
 								block();
 							}else
 							{ 
-								//throw exception("FOR: Se Esperaba : luego del Rango");
 								throw PythonError("Statement->FOR","Se Esperaba : luego del Rango");
-
 							}
 
 						}else 
 						{
-							//throw exception("FOR:Se Esperaba Palabra Reservada in");
 							throw PythonError("Statement->FOR","Se Esperaba Palabra Reservada in");
 						}
 					}else
@@ -495,7 +490,6 @@ public:
 				expr();
 			}else
 			{
-				//throw exception("ASSIGN-> Se Esperaba Operador de Asignacion");
 				throw PythonError("ASSIGN","Se Esperaba Operador de Asignacion");
 			}
 
@@ -527,13 +521,10 @@ public:
 						expr();
 					}else
 					{
-						//throw exception("assignP-> Se Esperaba =");
 						throw PythonError("assignP","Se Esperaba =");
-
 					}
 				}else
 				{
-					//throw exception ("assignP-> Se Esperaba ]");
 					throw PythonError("assignP","Se Esperaba ]");
 				}
 			}
@@ -544,7 +535,6 @@ public:
 				expr();
 			}else
 			{
-				//throw exception("ASSIGN-> Se Esperaba Operador de Asignacion");
 				throw PythonError("assignP","Se Esperaba Operador de Asignacion");
 			}
 
@@ -578,7 +568,6 @@ public:
 							token = lex->NextToken();
 						}else
 						{
-							//throw exception("METHODCALL -> Se Esperaba una coma luego de la expresion");
 							throw PythonError("METHODCALL","Se Esperaba una coma luego de la expresion");
 						}
 
@@ -589,7 +578,6 @@ public:
 						token = lex->NextToken();
 
 					}else{
-					//	throw exception("METHODCALL -> Se Esperaba Cierre de Parentesis");
 						throw PythonError("METHODCALL","Se Esperaba Cierre de Parentesis");
 					}
 				}
@@ -619,7 +607,12 @@ public:
 			}else if(token.getTipo() == TokenType::KW_READ)
 			{
 				token = lex->NextToken();
-				lvalue();
+				if(token.getTipo() == TokenType::ID)
+				{
+					token = lex->NextToken();
+					lvalue();
+				}else
+					throw PythonError("METHODCALL","Se Esperaba un ID despues de la palabra reservada READ");
 			}
 			#pragma endregion
 
@@ -648,7 +641,6 @@ public:
 							//token = lex->NextToken();
 				}
 			}else
-				//throw exception("METHODCALL2 -> Se esperaba (");
 				throw PythonError("METHODCALL2","Se esperaba (");
 
 			if(token.getTipo() == TokenType::SIGNO_PARENTESIS_DER)
@@ -656,7 +648,6 @@ public:
 				token = lex->NextToken();
 
 			}else{
-				//throw exception("METHODCALL2 -> Se Esperaba Cierre de Parentesis");
 				throw PythonError("METHODCALL2","Se Esperaba Cierre de Parentesis");
 			}
 
@@ -689,10 +680,9 @@ public:
 					token = lex->NextToken();
 				}else
 				{
-					throw PythonError("lvalue","Se Esperaba Cierre de Bracket");
+					throw PythonError("lvalue","Se Esperaba [ o ]");
 				}
 			}
-			
 		}catch (char* e)
         {
 			throw PythonError("lvalue",e);
@@ -705,7 +695,43 @@ public:
 		{
 			if(Es_expresion()){
 
-				#pragma region LVALUE | METHODCALL
+				if(token.getTipo() == TokenType::ID || token.getTipo() == TokenType::KW_PRINT || token.getTipo() == TokenType::KW_READ
+					|| token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ || token.getTipo() == TokenType::LIT_CADENA 
+					|| Numero() || Boolean())
+				{
+					Relacional();
+				}
+
+				#pragma region - <expr> & ~ <expr>
+				else if(token.getTipo() == TokenType::OP_REST || token.getTipo() == TokenType::OP_NEGACION)
+				{
+					token = lex->NextToken();
+					expr();
+				
+				#pragma endregion
+
+				#pragma region [ <expr> ]		
+				}else if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
+				{
+					token = lex->NextToken();
+					expr();
+
+					while(token.getTipo() == TokenType::SIGN_COMA)
+					{
+						token = lex->NextToken();
+						expr();
+					}
+
+					if(token.getTipo() == TokenType::SIGNO_BRACKET_DER)
+					{
+						token = lex->NextToken();
+					}else
+						throw PythonError("expr","Se Esperaba ]");
+				}
+			
+			#pragma endregion
+
+			/*	#pragma region LVALUE | METHODCALL
 				if(token.getTipo() == TokenType::ID)
 				{
 					exprP();
@@ -744,7 +770,6 @@ public:
 						token = lex->NextToken();
 					}else 
 					{
-						//throw exception("expr-> Se Esperaba )");
 						throw PythonError("expr","Se Esperaba )");
 					}
 				#pragma endregion
@@ -765,20 +790,129 @@ public:
 					{
 						token = lex->NextToken();
 					}else
-						//throw exception ("expr-> Se Esperaba ]");
-						throw PythonError("expr->","Se Esperaba ]");
-	
+						throw PythonError("expr","Se Esperaba ]");
 				}
 			
-			#pragma endregion
+			#pragma endregion*/
 			}else
 			{
 				throw PythonError("expr","Se Esperaba Expresion");
 			}
 		}catch (char* e)
         {
-			throw PythonError("expr->",e);
+			throw PythonError("expr",e);
          }
+	}
+
+	void Relacional()
+	{
+		try
+		{
+
+			ArithmeticoSumaResta();
+
+			while(OperadorRel())
+			{
+				token = lex->NextToken();
+				ArithmeticoSumaResta();
+
+			}
+
+		}catch(char* e)
+        {
+			throw PythonError("Relacional",e);
+         }
+	}
+
+	void ArithmeticoSumaResta()
+	{
+		try
+		{
+			Produccion();
+
+			while(token.getTipo() == TokenType::OP_OR || token.getTipo() == TokenType::OP_REST || token.getTipo() == TokenType::OP_SUM)
+			{
+				token = lex->NextToken();
+				Produccion();
+
+			}
+
+		}catch(char* e)
+        {
+			throw PythonError("ArithmeticoSumaResta",e);
+         }
+	}
+
+	void Produccion()
+	{
+		try
+		{
+			Shift();
+
+			while(token.getTipo() == TokenType::OP_DIV || token.getTipo() == TokenType::OP_MULT || token.getTipo() == TokenType::OP_MOD
+				|| token.getTipo() == TokenType::OP_AND)
+			{
+				token = lex->NextToken();
+				Shift();
+			}
+
+		}catch(char* e)
+        {
+			throw PythonError("Produccion",e);
+        }
+	}
+
+	void Shift()
+	{
+		try
+		{
+			Term();
+
+			while(token.getTipo() == TokenType::OP_SLEFT || token.getTipo() == TokenType::OP_SRIGHT)
+			{
+				token = lex->NextToken();
+				Term();
+			}
+
+		}catch(char* e)
+        {
+			throw PythonError("Produccion",e);
+        }
+	}
+
+	void Term()
+	{
+		try
+		{
+			if(Numero() || Boolean() || token.getTipo() == TokenType::LIT_CADENA)
+			{
+				constant();
+			
+			}else if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
+			{
+				token = lex->NextToken();
+				expr();
+
+				if(token.getTipo() == TokenType::SIGNO_PARENTESIS_DER)
+				{
+					token = lex->NextToken();
+				}else 
+				{
+					throw PythonError("term","Se Esperaba )");
+				}
+
+			}else if(token.getTipo() == TokenType::ID)
+			{
+				exprP();
+
+			}else if(token.getTipo() == TokenType::KW_READ || token.getTipo() == TokenType::KW_PRINT)
+			{
+				methodcall();
+			}
+		}catch(char* e)
+        {
+			throw PythonError("Term",e);
+        }
 	}
 
 	void exprP()
@@ -801,7 +935,6 @@ public:
 						token = lex->NextToken();
 					}else 
 					{
-						//throw exception("exprP-> Se Esperaba ]");
 						throw PythonError("exprP","Se Esperaba ]");
 					}
 
@@ -829,7 +962,6 @@ public:
 			{
 				token = lex->NextToken();
 			}else
-				//throw exception("InicioBloque-> Se Esperaba Inicio de Bloque");
 				throw PythonError("InicioBloque","Se Esperaba Inicio de Bloque");
 		}catch (char* e)
         {
@@ -906,7 +1038,6 @@ public:
 			{
 				token = lex->NextToken();
 			}else
-				// exception("arith_op-> Se Esperaba Operador Matematico");
 				throw PythonError("arith_op","Se Esperaba Operador Matematico");
 
 		}catch (char* e)
@@ -923,7 +1054,6 @@ public:
 			{
 				token = lex->NextToken();
 			}else
-				//throw exception("rel_op-> Se Esperaba Operador Relacional");
 				throw PythonError("rel_op","Se Esperaba Operador Relacional");
 
 		}catch (char* e)
@@ -940,8 +1070,8 @@ public:
 			{
 				token = lex->NextToken();
 			}else
-				//throw exception("eq_op-> Se Esperaba != o ==");
 				throw PythonError("eq_op","Se Esperaba != o ==");
+
 		}catch (char* e)
         {
 			throw PythonError("eq_op",e);
@@ -956,7 +1086,6 @@ public:
 			{
 				token = lex->NextToken();
 			}else
-				//throw exception("cond_op-> Se Esperaba La Palabra AND OR o NOT");
 				throw PythonError("cond_op","Se Esperaba La Palabra AND OR o NOT");
 
 		}catch (char* e)

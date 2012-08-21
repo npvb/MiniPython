@@ -15,7 +15,7 @@ public:
 	Lexer *lex;
 	Token token;
 
-	#pragma region Support_Functions
+	#pragma region Aux_Functions
 	bool Numero()
 	{
 		if(token.getTipo() == TokenType::LIT_NUM_FLOAT || token.getTipo() == TokenType::LIT_NUM_INT)
@@ -51,6 +51,7 @@ public:
 			case TokenType::OP_SRIGHT:
 			case TokenType::OP_MOD:
 			case TokenType::ID:
+			case TokenType::SIGNO_PARENTESIS_IZQ:
 
 			case TokenType::OP_MENOR:
 			case TokenType::OP_MENOR_IGUAL:
@@ -71,7 +72,7 @@ public:
 
 			case TokenType::LIT_FALSE:
 			case TokenType::LIT_TRUE:
-			/*No se si deba incluir lo de op_bin en Es_expr y agregar literal string*/
+	
 			return true;
 
 			default:
@@ -377,7 +378,6 @@ public:
 
 					}else 
 					{
-						throw exception("IF-> Se Esperaba : Luego de la Expresion");
 						throw PythonError("Statement->IF","Se Esperaba : Luego de la Expresion");
 					}
 					#pragma endregion
@@ -518,6 +518,7 @@ public:
 
 					if(token.getTipo() == TokenType::OP_ASIG)
 					{
+						token = lex->NextToken();
 						expr();
 					}else
 					{
@@ -727,10 +728,27 @@ public:
 						token = lex->NextToken();
 					}else
 						throw PythonError("expr","Se Esperaba ]");
-				}
-			
-			#pragma endregion
+				}else
+				#pragma endregion
 
+				#pragma region ( <expr> )
+				if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
+				{
+					token = lex->NextToken();
+
+					expr();
+
+					if(token.getTipo() == TokenType::SIGNO_PARENTESIS_DER)
+					{
+						token = lex->NextToken();
+					}else 
+					{
+						throw PythonError("expr","Se Esperaba )");
+					}
+				}
+				#pragma endregion
+
+				#pragma region used_To	
 			/*	#pragma region LVALUE | METHODCALL
 				if(token.getTipo() == TokenType::ID)
 				{
@@ -791,9 +809,9 @@ public:
 						token = lex->NextToken();
 					}else
 						throw PythonError("expr","Se Esperaba ]");
-				}
+				}*/
 			
-			#pragma endregion*/
+			#pragma endregion
 			}else
 			{
 				throw PythonError("expr","Se Esperaba Expresion");

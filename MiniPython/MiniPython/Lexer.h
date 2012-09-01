@@ -13,6 +13,7 @@ public:
 	int nivelIdentacion;
 	int fila;
 	int columna;
+	int estado;
 	FILE *pFile;
 	char simbolo;
 	vector<int>Pila_Identacion;
@@ -77,6 +78,7 @@ public:
 
 	Lexer(string archivo)
 	{
+		estado = 0;
 		InitMaps();
 		posicion = 0;
 		fila = 1;
@@ -106,7 +108,6 @@ public:
 				{
 					columna = 1;
 					fila++;
-
 				}
 
 				return simbolo;
@@ -145,10 +146,10 @@ public:
 			}      
 
 		}catch (char* e)
-            {
-				string error = "Current Symbol: ";
-				throw exception(error.append(e).c_str());
-            }
+        {
+			string error = "Current Symbol: ";
+			throw exception(error.append(e).c_str());
+        }
 	}
 
 	bool esOperadorMatematico()
@@ -172,7 +173,6 @@ public:
 	Token NextToken()
 	{
 		string lexema = "";
-		int estado = 0;
 		
 		while(true){
 			simbolo = CurrentSymbol();
@@ -184,7 +184,6 @@ public:
 					{
 						estado = 0;
 						simbolo = NextSymbol();
-					
 					}else if(simbolo == '_' || isalpha(simbolo))
 					{
 						estado = 1;
@@ -275,12 +274,14 @@ public:
 						estado = 1;
 						lexema+=simbolo;
 						simbolo = NextSymbol();
-
 					}else if(MapPalabrasReservadas.count(lexema) > 0)
 					{
+						estado = 0;
 						return Token(lexema,MapPalabrasReservadas[lexema],fila,columna);
-					}else
+					}else {
+						estado = 0;
 						return Token(lexema,TokenType::ID,fila,columna);
+					}
 					break;
 				#pragma endregion ID
                 
@@ -291,8 +292,10 @@ public:
 						estado = 2;
 						lexema+=simbolo;
 						simbolo = NextSymbol();
-					}else
+					}else{
+						estado = 0;
 						return Token(lexema,TokenType::LIT_NUM_INT,fila,columna);
+					}
 				break;
 				#pragma endregion NumerosINT
 
@@ -321,8 +324,10 @@ public:
 						estado = 4;
 						lexema+=simbolo;
 						simbolo = NextSymbol();
-					}else
+					}else{
+						estado = 0;
 						return Token(lexema,TokenType::LIT_NUM_FLOAT,fila,columna);
+					}
 					break;
 				#pragma endregion NumerosFloat	
 
@@ -348,7 +353,6 @@ public:
 					}else if(simbolo == '\"')
 					{
 						estado = 7;
-						//lexema+=simbolo;
 						simbolo = NextSymbol();
 					}else
 						throw exception ("Caracter Invalido o Falta Cierre del Literal String");
@@ -357,11 +361,13 @@ public:
 
 				#pragma region CASE 7
 				case 7:
+					estado = 0;
 					return Token(lexema, TokenType::LIT_CADENA,fila,columna);
 				#pragma endregion RETORNO STRINGS
 
 				#pragma region CASE 8
 				case 8:
+					estado = 0;
 					return Token(lexema,MapOperadores[lexema],fila,columna);
 				#pragma endregion RETORNO OPS_MATS
 
@@ -375,13 +381,16 @@ public:
 
 					}else
 					{
+						estado = 0;
 						return Token(lexema,MapOperadores[lexema],fila,columna);
 						
-					}break;
+					}
+					break;
 				#pragma endregion MENOR o MENOR IGUAL
 
 				#pragma region CASE 10
 				case 10:
+					estado = 0;
 					return Token(lexema,MapOperadores[lexema],fila,columna);
 				#pragma endregion RETORNO 
 
@@ -395,9 +404,10 @@ public:
 
 					}else
 					{
+						estado = 0;
 						return Token(lexema,MapOperadores[lexema],fila,columna);
-						
-					}break;
+					}
+					break;
 				#pragma endregion MAYOR O MAYOR IGUAL
 
 				#pragma region CASE 12
@@ -407,11 +417,11 @@ public:
 						estado = 10;
 						lexema+=simbolo;
 						simbolo = NextSymbol();
-
 					}else
 					{
 						throw exception("Se Esperada Simbolo de = luego del Operador ! ");
-					}break;
+					}
+					break;
 				#pragma endregion DISTINTO DE
 
 				#pragma region CASE 13
@@ -421,16 +431,17 @@ public:
 						estado = 10;
 						lexema+=simbolo;
 						simbolo = NextSymbol();
-
 					}else
 					{
+						estado = 0;
 						return Token(lexema,MapOperadores[lexema],fila,columna);
-						break;
 					}
+					break;
 				#pragma endregion IGUAL
 
 				#pragma region CASE 14
 				case 14:
+					estado = 0;
 					return Token(lexema,MapOperadores[lexema],fila,columna);
 
 				#pragma endregion OPERADORES DE PUNTUACION
@@ -463,6 +474,7 @@ public:
 
 				#pragma region CASE 17
 				case 17:
+					estado = 0;
 					return Token(lexema,TokenType::OP_RANGO,fila,columna);
 				#pragma endregion OPERADOR ...
 
@@ -479,13 +491,11 @@ public:
 						{
 							Pila_Identacion.push_back(nivelIdentacion);
 							nivelIdentacion = 0;
+							estado = 0;
 							return Token("INDENT",TokenType::OP_IDENT,fila,columna);
 
 						}else if (nivelIdentacion < Pila_Identacion.back())
-						{	
-							vector<int>Pila2;
-							//Pila2.push_back(0);
-
+						{								
 							int pos = 0;
 							for(int x = 0;x<Pila_Identacion.size();x++)
 							{
@@ -497,19 +507,13 @@ public:
 							}
 							
 							if(pos>0)
-							{
-								for(int x = 0;x<=pos;x++)
-								{
-									Pila2.push_back(Pila_Identacion[x]);
-								}
-								Pila_Identacion = Pila2;
+							{								
+								Pila_Identacion.pop_back();
+								return Token("DEDENT", TokenType::OP_DEDENT, fila, columna);
 
-								nivelIdentacion = 0;
-								return Token("DEDENT",TokenType::OP_DEDENT,fila,columna);
-							}else 
-							{
-								throw exception("Lexer: Error de Indentacion ");
-							}
+							}else
+								
+								throw exception("Lexer: Error de Indentacion");
 						}else
 						{
 							/*NOTHING HAPPENS!!*/

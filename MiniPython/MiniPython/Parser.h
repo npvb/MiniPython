@@ -335,51 +335,49 @@ public:
 			#pragma region IF_STATEMENT
 
 			else if(token.getTipo() == TokenType::KW_IF)
+			{
+				token = lex->NextToken();
+				expr();
+			
+				if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 				{
 					token = lex->NextToken();
-					expr();
-					//token = lex->NextToken();
-
-					if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
+					block();
+					
+					while(token.getTipo() == TokenType::KW_ELIF)
 					{
 						token = lex->NextToken();
-						block();
-						
-						while(token.getTipo() == TokenType::KW_ELIF)
+						expr();
+			
+						if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 						{
 							token = lex->NextToken();
-							expr();
-							//token = lex->NextToken();
+							block();
 
-							if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
-							{
-								token = lex->NextToken();
-								block();
-
-							}else 
-							{
-								throw PythonError("Statement->IF","Se Esperaban : al final de la Expresion");
-							}
-						}
-
-						if(token.getTipo() == TokenType::KW_ELSE)
+						}else 
 						{
-							token = lex->NextToken();
-
-							if(token.getTipo() ==TokenType::SIGN_DOSPUNTOS)
-							{
-								token = lex->NextToken();
-								block();
-							}else 
-							{
-								throw PythonError("Statement->IF->ELSE","Se Esperaba : Luego del Else");
-							}
+							throw PythonError("Statement->IF","Se Esperaban : al final de la Expresion");
 						}
-
-					}else 
-					{
-						throw PythonError("Statement->IF","Se Esperaba : Luego de la Expresion");
 					}
+
+					if(token.getTipo() == TokenType::KW_ELSE)
+					{
+						token = lex->NextToken();
+
+						if(token.getTipo() ==TokenType::SIGN_DOSPUNTOS)
+						{
+							token = lex->NextToken();
+							block();
+						}else 
+						{
+							throw PythonError("Statement->IF->ELSE","Se Esperaba : Luego del Else");
+						}
+					}
+
+				}else 
+				{
+					throw PythonError("Statement->IF","Se Esperaba : Luego de la Expresion");
+				}
 					#pragma endregion
 
 			#pragma region WHILE_STATEMENT
@@ -926,7 +924,8 @@ public:
 			}else if(token.getTipo() == TokenType::KW_READ || token.getTipo() == TokenType::KW_PRINT)
 			{
 				methodcall();
-			}
+			}else
+				PythonError("Term","Se Esperaba Termino");
 		}catch(char* e)
         {
 			throw PythonError("Term",e);

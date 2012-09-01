@@ -1,41 +1,49 @@
 class pruebaMiniPython:
 	a = 2
 	b = x + 1
-	z = ((78/4)/76)
 
 	def pruebaSinParametros:
 		print 3
-		print b,true,false
+		print b(),true,false
 		print 2+1
 		read v
-		read arreglo[x]
-		void
+		read r[x]
+		void()
 
 		while hola>=3:
 			x = 3+2
 		return x
 
-		for l in 0 ... 1:
-			return gcd (b+1, a-2+3-(7) % b)
-		break
+		for l in 0 ... x-1:
+			if b == 0:
+				return a
+			else:
+				return gcd (b, a % b)
 
-	def main: 
-		if (true or false):
-			y = y + x
-			print y
-		else:
-			print x
-		
+		for l in 0 ... x-1:
+			for l in 0 ... x-1:
+				if b == 0:
+					return a
+				else:
+					return gcd (b, a % b)
 
 	def gcd (a, b):
 		if b == 0:
-			return false
-		elif z>3 and z+4 <= z/2:
-			return true
-		
-
-	def fibo(b):
-		if (b==0 or b==1):
-			return b
+			return a
 		else:
-			return (b+1) + (b+2) 
+			return gcd (b, a % b)
+
+	def main: 
+		while (5 > 76 and 76 == y):
+			return x
+		if (true):
+			if(false):
+				y = y + x
+				while (5>67 == y):
+					return algo
+			elif (89+3-3):
+				y = 5
+			else:
+				print x
+		else:
+			print "n"

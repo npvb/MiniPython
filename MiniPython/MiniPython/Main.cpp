@@ -6,10 +6,12 @@
 
 using namespace std;
 
+int fila = -1;
 int main()
 {
-	try{
 
+	try{
+		
 		Parser par(new Lexer("PruebaPython.txt"));
 		while(par.token.getTipo() != TokenType::EOFF)
 		{

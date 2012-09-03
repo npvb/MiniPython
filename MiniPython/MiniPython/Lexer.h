@@ -5,13 +5,13 @@
 #include <ctype.h>
 #include <vector>
 
+extern int fila;
 class Lexer
 {
 public:
 	long size_archivo;
 	long posicion;
 	int nivelIdentacion;
-	int fila;
 	int columna;
 	int estado;
 	FILE *pFile;

@@ -1,13 +1,13 @@
 class pruebaMiniPython:
 	a = 2
-	b = x + 1
+	b = x + b
 
 	def pruebaSinParametros:
 		print 3
 		print b(),true,false
 		print 2+1
 		read v
-		read r[x]
+		read arreglo[x]
 		void()
 
 		while hola>=3:

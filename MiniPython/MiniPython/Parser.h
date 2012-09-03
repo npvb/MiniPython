@@ -2,12 +2,15 @@
 #include <iomanip>
 #include <string>
 #include <stdio.h>
+#include <vector>
 #include <string>
-#include "Lexer.h"
 #include <sstream>
+#include "Lexer.h"
+#include "AST.h"
 
 using namespace std;
 
+extern int fila;
 class Parser
 {
 public:
@@ -171,7 +174,7 @@ public:
 	exception PythonError(string nombre_funcion,string descripcion)
 	{
 		stringstream msg;
-		msg << "Error de: "<<nombre_funcion<<"-> "<<descripcion<<"\nFila "<<lex->fila<<" Columna "<<lex->columna<<endl;
+		msg << "Error de: "<<nombre_funcion<<"-> "<<descripcion<<"\nFila "<<fila<<" Columna "<<lex->columna<<endl;
 		throw exception(msg.str().c_str());
 	}
 	#pragma endregion
@@ -459,6 +462,7 @@ public:
 		try{
 			if(token.getTipo() == TokenType::ID)
 			{
+				MethodCallExpr *mtc = new MethodCallExpr(token.lexema);
 				token = lex->NextToken();
 
 				if(token.getTipo() == TokenType::OP_ASIG || token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
@@ -467,7 +471,7 @@ public:
 
 				}else if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
 				{
-					methodcall2();
+					methodcall2(mtc);
 				}
 			}
 		}catch(char* e)
@@ -549,7 +553,7 @@ public:
 	{
 		try
 		{
-			#pragma region ID_METHODCALL
+		/*	#pragma region ID_METHODCALL
 			if(token.getTipo() == TokenType::ID)
 			{
 				token = lex->NextToken();
@@ -581,14 +585,14 @@ public:
 					}
 				}
 			#pragma endregion 
-
+			}*/
 			#pragma region PRINT_METHODCALL	
-			}else if(token.getTipo() == TokenType::KW_PRINT) 
+			 if(token.getTipo() == TokenType::KW_PRINT) 
 			{			
 					token = lex->NextToken();
 
 					if (Es_expresion()) {
-						expr();
+						Expr *printexpr = expr();
 					} else 
 					{
 						throw PythonError("METHODCALL-> PRINT","Se Esperaba una expresion");
@@ -621,7 +625,7 @@ public:
          }
 	}
 
-	void methodcall2()
+	Expr* methodcall2(MethodCallExpr* inherit)
 	{
 		try
 		{
@@ -630,15 +634,17 @@ public:
 					token = lex->NextToken();
 
 					if(Es_expresion()){
-						expr();	
+						Expr *ep = expr();	
+						inherit->Parametros.push_back(ep);
 
-							while(token.getTipo() == TokenType::SIGN_COMA)
-							{
-								token = lex->NextToken();
-								expr();
-							}
-							//token = lex->NextToken();
-				}
+						while(token.getTipo() == TokenType::SIGN_COMA)
+						{
+							token = lex->NextToken();
+							Expr *ep = expr();	
+							inherit->Parametros.push_back(ep);
+						}
+						//token = lex->NextToken();
+					}
 			}else
 				throw PythonError("METHODCALL2","Se esperaba (");
 
@@ -647,8 +653,10 @@ public:
 				token = lex->NextToken();
 
 			}else{
-				throw PythonError("METHODCALL2","Se Esperaba Cierre de Parentesis");
+				throw PythonError("METHODCALL2","Se Esperaba )");
 			}
+
+			return inherit;
 
 		}catch (char* e)
         {
@@ -688,29 +696,37 @@ public:
          }
 	}
 
-	void expr()
+	Expr* expr()
 	{
 		try
 		{
 			if(Es_expresion()){
 
-				if(token.getTipo() == TokenType::ID || token.getTipo() == TokenType::KW_PRINT || token.getTipo() == TokenType::KW_READ
+				if(token.getTipo() == TokenType::ID /*|| token.getTipo() == TokenType::KW_PRINT || token.getTipo() == TokenType::KW_READ*/
 					|| token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ || token.getTipo() == TokenType::LIT_CADENA 
 					|| Numero() || Boolean())
 				{
-					Relacional();
+					return Relacional();
 				}
 
 				#pragma region - <expr> & ~ <expr>
 				else if(token.getTipo() == TokenType::OP_REST || token.getTipo() == TokenType::OP_NEGACION)
 				{
-					token = lex->NextToken();
-					expr();
+					if(token.getTipo() == TokenType::OP_REST)
+					{
+						token = lex->NextToken();
+						return new NegateExpr(expr());
+
+					}else if(token.getTipo() == TokenType::OP_NEGACION)
+					{
+						token = lex->NextToken();
+						return new InvertExpr(expr());
+					}
 				
 				#pragma endregion
-
-				#pragma region [ <expr> ]		
-				}else if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
+						
+				}/*#pragma region [ <expr> ]
+								 else if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
 				{
 					token = lex->NextToken();
 					expr();
@@ -744,7 +760,7 @@ public:
 						throw PythonError("expr","Se Esperaba )");
 					}
 				}
-				#pragma endregion
+				#pragma endregion*/
 
 				#pragma region used_To	
 			/*	#pragma region LVALUE | METHODCALL
@@ -820,19 +836,48 @@ public:
          }
 	}
 
-	void Relacional()
+	Expr* Relacional()
 	{
 		try
 		{
 
-			ArithmeticoSumaResta();
+			Expr* aritmeticosumaresta1 = ArithmeticoSumaResta();
 
 			while(OperadorRel())
 			{
-				token = lex->NextToken();
-				ArithmeticoSumaResta();
+				switch(token.Tipo)
+				{
+					case TokenType::OP_MENOR:
+						token = lex->NextToken();
+						aritmeticosumaresta1 = new MenorExpr(aritmeticosumaresta1,ArithmeticoSumaResta());
+						break;
+					case TokenType::OP_MENOR_IGUAL:
+						token = lex->NextToken();
+						aritmeticosumaresta1 = new MenorIgualExpr(aritmeticosumaresta1,ArithmeticoSumaResta());
+						break;
+					case TokenType::OP_MAYOR:
+						token = lex->NextToken();
+						aritmeticosumaresta1 = new MayorExpr(aritmeticosumaresta1,ArithmeticoSumaResta());
+						break;
+					case TokenType::OP_MAYOR_IGUAL:
+						token = lex->NextToken();
+						aritmeticosumaresta1 = new MayorIgualExpr(aritmeticosumaresta1,ArithmeticoSumaResta());
+						break;
+					case TokenType::OP_DISTINTO_DE:
+						token = lex->NextToken();
+						aritmeticosumaresta1 = new DistintoExpr(aritmeticosumaresta1,ArithmeticoSumaResta());
+						break;
+					case TokenType::OP_IGUAL_IGUAL:
+						token = lex->NextToken();
+						aritmeticosumaresta1 = new IgualExpr(aritmeticosumaresta1,ArithmeticoSumaResta());
+						break;
 
+					default:
+						continue;
+				}
 			}
+
+			return aritmeticosumaresta1;
 
 		}catch(char* e)
         {
@@ -840,18 +885,38 @@ public:
          }
 	}
 
-	void ArithmeticoSumaResta()
+	Expr* ArithmeticoSumaResta()
 	{
 		try
 		{
-			Produccion();
+			Expr* produccion1 = Produccion();
 
 			while(token.getTipo() == TokenType::OP_OR || token.getTipo() == TokenType::OP_REST || token.getTipo() == TokenType::OP_SUM)
 			{
-				token = lex->NextToken();
-				Produccion();
+				switch(token.Tipo)
+				{
+				case TokenType::OP_OR:
+					token = lex->NextToken();
+					produccion1 = new OrExpr(produccion1,Produccion());
+					break;
+
+				case TokenType::OP_REST:
+					token = lex->NextToken();
+					produccion1 = new RestaExpr(produccion1,Produccion());
+					break;
+
+				case TokenType::OP_SUM:
+					token = lex->NextToken();
+					produccion1 = new SumaExpr(produccion1,Produccion());
+					break;
+
+				default:
+						continue;
+				}
 
 			}
+
+			return produccion1;
 
 		}catch(char* e)
         {
@@ -859,36 +924,71 @@ public:
          }
 	}
 
-	void Produccion()
+	Expr* Produccion()
 	{
 		try
 		{
-			Shift();
+			Expr *shift1 = Shift();
 
 			while(token.getTipo() == TokenType::OP_DIV || token.getTipo() == TokenType::OP_MULT || token.getTipo() == TokenType::OP_MOD
 				|| token.getTipo() == TokenType::OP_AND)
 			{
-				token = lex->NextToken();
-				Shift();
+				switch(token.Tipo)
+				{
+				case TokenType::OP_DIV:
+					token = lex->NextToken();
+					shift1 = new DivisionExpr(shift1,Shift());
+					break;
+
+				case TokenType::OP_MULT:
+					token = lex->NextToken();
+					shift1 = new MultiplicacionExpr(shift1,Shift());
+					break;
+
+				case TokenType::OP_MOD:
+					token = lex->NextToken();
+					shift1 = new ModExpr(shift1,Shift());
+					break;
+
+				case TokenType::OP_AND:
+					token = lex->NextToken();
+					shift1 = new AndExpr(shift1,Shift());
+					break;
+
+				default:
+						continue;
+				}
 			}
 
+			return shift1;
 		}catch(char* e)
         {
 			throw PythonError("Produccion",e);
         }
 	}
 
-	void Shift()
+	Expr* Shift()
 	{
 		try
 		{
-			Term();
+			Expr *term1 = Term();
 
 			while(token.getTipo() == TokenType::OP_SLEFT || token.getTipo() == TokenType::OP_SRIGHT)
 			{
-				token = lex->NextToken();
-				Term();
+				if(token.getTipo() == TokenType::OP_SLEFT)
+				{
+					token = lex->NextToken();
+					term1 = new ShiftLeftExpr(term1,Term());
+
+				}else if(token.getTipo() == TokenType::OP_SRIGHT)
+				{
+					token = lex->NextToken();
+					term1 = new ShiftRightExpr(term1,Term());
+				}
+				
 			}
+
+			return term1;
 
 		}catch(char* e)
         {
@@ -896,18 +996,19 @@ public:
         }
 	}
 
-	void Term()
+	Expr* Term()
 	{
 		try
 		{
 			if(Numero() || Boolean() || token.getTipo() == TokenType::LIT_CADENA)
 			{
-				constant();
+				return constant();
 			
 			}else if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
 			{
 				token = lex->NextToken();
-				expr();
+				Expr *termino = expr();
+				//expr();
 
 				if(token.getTipo() == TokenType::SIGNO_PARENTESIS_DER)
 				{
@@ -917,35 +1018,35 @@ public:
 					throw PythonError("term","Se Esperaba )");
 				}
 
+				return termino;
+
 			}else if(token.getTipo() == TokenType::ID)
 			{
-				exprP();
+				IDExpr *id = new IDExpr(token.lexema);
+				return exprP(id);
 
-			}else if(token.getTipo() == TokenType::KW_READ || token.getTipo() == TokenType::KW_PRINT)
+			/*}else if(token.getTipo() == TokenType::KW_READ || token.getTipo() == TokenType::KW_PRINT)
 			{
-				methodcall();
+				methodcall();*/
 			}else
 				PythonError("Term","Se Esperaba Termino");
+
 		}catch(char* e)
         {
 			throw PythonError("Term",e);
         }
 	}
 
-	void exprP()
+	Expr* exprP(IDExpr *inherit)
 	{
 		try
 		{
-			//if(token.getTipo() == TokenType::ID)
-			//{
 				token = lex->NextToken();
-				if(token.getTipo() == TokenType::OP_ASIG)
-				{
-					assignP();
-				}
+			
 				if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
 				{
-					expr();
+					ArrayExpr *arreglo = new ArrayExpr(inherit->varname,expr());
+					//expr();
 
 					if(token.getTipo() == TokenType::SIGNO_BRACKET_DER)
 					{
@@ -955,15 +1056,21 @@ public:
 						throw PythonError("exprP","Se Esperaba ]");
 					}
 
+					return arreglo;
+
 				}else if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
 				{
-					methodcall2();
+					MethodCallExpr *methodcall = new MethodCallExpr(inherit->varname);
 
-					}else if(token.getTipo() == TokenType::KW_PRINT || token.getTipo() == TokenType::KW_READ)
-					{
-						methodcall();
-					}
-			//}
+					return methodcall2(methodcall);
+
+				}else
+					return inherit;
+
+				/*else if(token.getTipo() == TokenType::KW_PRINT || token.getTipo() == TokenType::KW_READ)
+				{
+					methodcall();
+				}*/
 
 		}catch (char* e)
         {
@@ -1020,112 +1127,23 @@ public:
          }
 	}
 
-	void op_bin()
-	{
-		try
-		{
-			if(OperadorMat())
-			{
-				arith_op();
-
-			}else if(OperadorRel())
-			{
-				rel_op();
-
-			}else if(OperadorEq())
-			{
-				eq_op();
-
-			}else if(OperadorCon())
-			{
-				cond_op();
-			}
-			
-		}catch (char* e)
-        {
-			throw PythonError("op_bin",e);
-         }
-	}
-
-	void arith_op()
-	{
-		try
-		{
-			if(OperadorMat())
-			{
-				token = lex->NextToken();
-			}else
-				throw PythonError("arith_op","Se Esperaba Operador Matematico");
-
-		}catch (char* e)
-        {
-			throw PythonError("arith_op",e);
-         }
-	}
-
-	void rel_op()
-	{
-		try
-		{
-			if(OperadorRel())
-			{
-				token = lex->NextToken();
-			}else
-				throw PythonError("rel_op","Se Esperaba Operador Relacional");
-
-		}catch (char* e)
-        {
-			throw PythonError("rel_op",e);
-         }
-	}
-
-	void eq_op()
-	{
-		try
-		{
-			if(OperadorEq())
-			{
-				token = lex->NextToken();
-			}else
-				throw PythonError("eq_op","Se Esperaba != o ==");
-
-		}catch (char* e)
-        {
-			throw PythonError("eq_op",e);
-         }
-	}
-	
-	void cond_op()
-	{
-		try
-		{
-			if(OperadorCon())
-			{
-				token = lex->NextToken();
-			}else
-				throw PythonError("cond_op","Se Esperaba La Palabra AND OR o NOT");
-
-		}catch (char* e)
-        {
-			throw PythonError("cond_op",e);
-         }
-	}
-
-	void constant()
+	Expr* constant()
 	{
 		try
 		{
 			if(Numero())
 			{
 				token = lex->NextToken();
+				return new NumExpr();
 
 			}else if(Boolean())
 			{
-				bool_const();
+				return bool_const();
 
 			}else if(token.getTipo() == TokenType::LIT_CADENA || token.getTipo() == TokenType::ID)
 			{
 				token = lex->NextToken();
+				return new CharExpr();
 			}
 			
 		}catch (char* e)
@@ -1134,7 +1152,7 @@ public:
          }
 	}
 
-	void bool_const()
+	Expr* bool_const()
 	{
 		try
 		{
@@ -1142,7 +1160,7 @@ public:
 			{
 				token = lex->NextToken();
 			}
-
+			return new BooleanExpr();
 		}catch (char* e)
         {
 			throw PythonError("bool_const",e);

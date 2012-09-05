@@ -10,12 +10,14 @@ int fila = -1;
 int main()
 {
 
-	try{
-		
+	try
+	{
 		Parser par(new Lexer("PruebaPython.txt"));
+
 		while(par.token.getTipo() != TokenType::EOFF)
 		{
-			par.program();
+			ASTNode *prgm = par.program();
+			cout << endl << endl << prgm->ToString() << endl << endl ; 
 		}
 
 		if(par.token.getTipo() == TokenType::EOFF)

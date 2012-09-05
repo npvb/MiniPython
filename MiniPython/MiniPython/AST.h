@@ -23,16 +23,18 @@ public:
 	exception ASTError(string nombre_funcion,string descripcion)
 	{
 		stringstream msg;
-		msg << "Error de: "<<nombre_funcion<<"-> "<<descripcion<<"\nFila # "<<linea<<endl;
+		msg << "Error de: " << nombre_funcion << "-> " << descripcion << "\nFila # "<<linea<<endl;
 		throw exception(msg.str().c_str());
 	}
 };
 
+#pragma region Expresiones
 class Expr: public ASTNode
 {
 };
 
  #pragma region OpBinario
+
 class OpBinExpr : public Expr
 {
 public:
@@ -351,3 +353,348 @@ public:
 };
 #pragma endregion
 
+#pragma endregion
+
+#pragma region Statements
+
+class Statement : public ASTNode
+{
+};
+
+class BlockStatement : public Statement
+{
+public:
+	vector<Statement *> statements;
+
+	virtual string ToString()
+	{
+		string retorno = "";
+
+		for (int x = 0; x < statements.size(); x++)
+		{
+			retorno.append(statements[x]->ToString() + "\n");
+		}
+
+		return retorno;
+	}
+};
+
+class AssignStatement : public Statement
+{
+public:
+	Expr *leftValue;
+	Expr *rightValue;
+
+	AssignStatement(Expr *lvalue, Expr *rvalue)
+	{
+		leftValue = lvalue;
+		rightValue = rvalue;
+	}
+
+	virtual string ToString()
+	{
+		return leftValue->ToString() + " = " + rightValue->ToString();
+	}
+};
+
+class MethodCallStatement : public Statement
+{
+public:
+	MethodCallExpr *methodCall;
+
+	MethodCallStatement(MethodCallExpr *mtc)
+	{
+		methodCall = mtc;
+	}
+
+	virtual string ToString()
+	{
+		string retorno = methodCall->nombre_funcion + "(";
+
+		for (int x = 0; x < methodCall->Parametros.size(); x++)
+		{
+			retorno.append(methodCall->Parametros[x]->ToString());
+
+			if (x != methodCall->Parametros.size() - 1)
+				retorno.append(", ");
+		}
+
+		retorno.append(")");
+
+		return retorno;
+	}
+};
+
+class ElseIfBlockStatement : public Statement
+{
+public:
+	Expr *condition;
+	BlockStatement *block;
+
+	ElseIfBlockStatement(Expr *cond, BlockStatement *blck)
+	{
+		condition = cond;
+		block = blck;
+	}
+
+	virtual string ToString()
+	{
+		string retorno = "else if (" + condition->ToString() + "):\n";
+		retorno += block->ToString();
+		return retorno;
+	}
+};
+
+class IfStatement : public Statement
+{
+public:
+	Expr *condition;
+	BlockStatement *ifBlock;
+	vector<ElseIfBlockStatement*> elifBlock_list;
+	BlockStatement *elseBlock;
+
+	IfStatement(Expr *cond, BlockStatement *ifBlck)
+	{
+		condition = cond;
+		ifBlock = ifBlck;
+
+		elseBlock = NULL;
+	}
+
+	virtual string ToString()
+	{
+		string retorno;
+		retorno = "if (" + condition->ToString() + "):\n";
+		retorno += ifBlock->ToString();
+
+		for (int x = 0; x < elifBlock_list.size(); x++)
+		{
+			retorno += elifBlock_list[x]->ToString();
+		}
+
+		if (elseBlock != NULL)
+		{
+			retorno += "else \n";
+			retorno += elseBlock->ToString();
+		}
+
+		return retorno;
+	}
+};
+
+
+#pragma region Iteration
+
+class IterationStatement : public Statement
+{
+};
+
+class WhileStatement : public IterationStatement
+{
+public:
+	Expr *condition;
+	BlockStatement *block;
+
+	WhileStatement(Expr *cond, BlockStatement *blck)
+	{
+		condition = cond;
+		block = blck;
+	}
+
+	virtual string ToString()
+	{
+		string retorno = "while (" + condition->ToString() + "):\n";
+		retorno += block->ToString();
+
+		return retorno;
+	}
+};
+
+class ForStatement : public IterationStatement
+{
+public:
+	string varname;
+	Expr *exprInicial;
+	Expr *exprFinal;
+	BlockStatement *block;
+
+	ForStatement(string vName)
+	{
+		varname = vName;
+		
+		exprInicial = exprFinal = NULL;
+		block = NULL;
+	}
+
+	virtual string ToString()
+	{
+		string retorno = "for (" + varname + " in " + exprInicial->ToString() + " .. " + exprFinal->ToString() + "):\n";
+		retorno += block->ToString();
+
+		return retorno;
+	}
+};
+
+#pragma endregion
+
+class ReturnStatement : public Statement
+{
+public:
+	Expr *expr;
+
+	ReturnStatement(Expr *e)
+	{
+		expr = e;
+	}
+
+	virtual string ToString()
+	{
+		return "return " + expr->ToString();
+	}
+};
+
+class BreakStatement : public Statement
+{
+public:
+	BreakStatement() { }
+
+	virtual string ToString()
+	{
+		return "break";
+	}
+};
+
+class ContinueStatement : public Statement
+{
+public:
+	ContinueStatement() { }
+
+	virtual string ToString()
+	{
+		return "continue";
+	}
+};
+
+class ReadStatement : public Statement
+{
+public:
+	Expr *value;
+
+	ReadStatement(Expr *val)
+	{
+		value = val;
+	}
+
+	virtual string ToString()
+	{
+		return "read " + value->ToString();
+	}
+};
+
+class PrintStatement : public Statement
+{
+public:
+	vector<Expr *> printlist;
+
+	virtual string ToString()
+	{
+		string retorno = "print ";
+
+		for (int x = 0; x < printlist.size(); x++)
+		{
+			retorno += printlist[x]->ToString();
+
+			if (x != printlist.size() - 1)
+				retorno.append(", ");
+		}
+
+		return retorno;
+	}
+};
+
+#pragma endregion
+
+#pragma region Program
+
+class FieldDeclNode : public ASTNode
+{
+public:
+	AssignStatement *decl_stmnt;
+
+	FieldDeclNode(AssignStatement *decl)
+	{
+		decl_stmnt = decl;
+	}
+
+	virtual string ToString()
+	{
+		return decl_stmnt->ToString();
+	}
+};
+
+class MethodDeclNode : public ASTNode
+{
+public:
+	string methodName;
+	vector<string> methodArguments;
+	BlockStatement *block;
+
+	MethodDeclNode(string name)
+	{
+		methodName = name;
+
+		block = NULL;
+	}
+
+	virtual string ToString()
+	{
+		string retorno = "def " + methodName + " (";
+
+		if (methodArguments.size() > 0) {
+
+			for (int x = 0; x < methodArguments.size(); x++)
+			{
+				retorno += methodArguments[x];
+				if (x != methodArguments.size() - 1)
+					retorno += ", ";
+			}
+		}
+		
+		retorno += "):\n";
+		retorno += block->ToString();
+
+		return retorno;
+	}
+};
+
+class ProgramNode : public ASTNode
+{
+public:
+	string name;
+	vector<FieldDeclNode *> field_decl_list;
+	vector<MethodDeclNode *> method_decl_list;
+
+	ProgramNode(string nombre)
+	{
+		name = nombre;
+	}
+
+	virtual string ToString()
+	{
+		string retorno = "class " + name +  " :\n";
+		
+		for (int x = 0; x < field_decl_list.size(); x++)
+		{
+			retorno += field_decl_list[x]->ToString() + "\n";
+		}
+
+		for (int x = 0; x < method_decl_list.size(); x++)
+		{
+			retorno += method_decl_list[x]->ToString() + "\n";
+		}
+
+		return retorno;
+	}
+};
+
+#pragma endregion

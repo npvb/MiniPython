@@ -177,6 +177,7 @@ public:
 		msg << "Error de: "<<nombre_funcion<<"-> "<<descripcion<<"\nFila "<<fila<<" Columna "<<lex->columna<<endl;
 		throw exception(msg.str().c_str());
 	}
+
 	#pragma endregion
 
 	Parser(Lexer *l)
@@ -185,7 +186,7 @@ public:
 		token = Token();
 	}
 
-	void program()
+	ASTNode* program()
 	{
 		try
 		{
@@ -195,7 +196,10 @@ public:
 				token = lex->NextToken();
 				if(token.getTipo() == TokenType::ID)
 				{
+					ProgramNode *prgm = new ProgramNode(token.lexema);
+
 					token = lex->NextToken();
+					
 					if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 					{
 						token = lex->NextToken();
@@ -204,18 +208,22 @@ public:
 
 						while(token.getTipo() == TokenType::ID)
 						{
-							field_decl();
+							FieldDeclNode *field_dec = dynamic_cast<FieldDeclNode *> (field_decl());
+							prgm->field_decl_list.push_back(field_dec);
 						}
 
 						while(token.getTipo() == TokenType::KW_DEF)
 						{
-							method_decl();
+							MethodDeclNode *method_dec =dynamic_cast<MethodDeclNode *> (method_decl());
+							prgm->method_decl_list.push_back(method_dec);
 						}
 
 						if(token.getTipo() == TokenType::OP_DEDENT)
 						{
 							token = lex->NextToken();
 						}
+
+						return prgm;
 					}else
 					{
 						throw PythonError("Program","Se Esperaba : despues del Nombre de la Clase");
@@ -227,29 +235,27 @@ public:
 			}else
 			{
 				throw PythonError("Program","Se Esperaba la palabra Class al Inicio del Programa");
-
 			}
-			
 		}catch (char* e)
-			{
-				string error = "program: ";
-				throw exception(error.append(e).c_str());
-			 }
+		{
+			string error = "program: ";
+			throw exception(error.append(e).c_str());
+		}
 	}
 
-	void field_decl()
+	ASTNode* field_decl()
 	{
 		try
 		{
-			assign();
-
+			AssignStatement *assignStmnt = dynamic_cast<AssignStatement *> (assign());
+			return new FieldDeclNode(assignStmnt);
 		}catch (char* e)
         {
 			throw PythonError("field_decl",e);
-         }
+        }
 	}
 
-	void method_decl()
+	ASTNode* method_decl()
 	{
 		try
 		{
@@ -257,6 +263,7 @@ public:
 
 			if(token.getTipo() == TokenType::ID)
 			{
+				MethodDeclNode *mtd = new MethodDeclNode(token.lexema);
 				token = lex->NextToken();
 
 				if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
@@ -265,6 +272,8 @@ public:
 
 					if(token.getTipo() == TokenType::ID)
 					{
+						mtd->methodArguments.push_back(token.lexema);
+
 						token = lex->NextToken();
 						while(token.getTipo() == TokenType::SIGN_COMA)
 						{
@@ -272,6 +281,7 @@ public:
 
 							if(token.getTipo() == TokenType::ID)
 							{
+								mtd->methodArguments.push_back(token.lexema);
 								token = lex->NextToken();
 							}else 
 							{
@@ -282,37 +292,45 @@ public:
 						if(token.getTipo() == TokenType::SIGNO_PARENTESIS_DER)
 						{
 							token = lex->NextToken();
-
+						} else {
+							throw PythonError("method_decl","Se Esperaba un ) despues de los argumentos");
 						}
-
 					}
 				}
 				
 				if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 				{
 					token = lex->NextToken();
-					block();
+					mtd->block = dynamic_cast<BlockStatement *> (block());
+
+					return mtd;
+				} else {
+					throw PythonError("method_decl","Se Esperaba una definicion del metodo");
 				}
-		}
-			
+			}
 		}catch (char* e)
 		{
 			throw PythonError("method_decl",e);
 		}
 }
 
-	void block()
+	Statement* block()
 	{
 		try
 		{
 			InicioBloque();
 
+			BlockStatement *blck = new BlockStatement();
+
 			while(isStatement())
 			{
-				statement();
+				Statement *stmnt = statement();
+				blck->statements.push_back(stmnt);
 			}
 				
 			FinBloque();
+
+			return blck;
 			
 		}catch (char* e)
         {
@@ -320,43 +338,50 @@ public:
          }
 	}
 
-	void statement()
+	Statement* statement()
 	{
 		try
 		{
-			#pragma region Assign | MethodCall
+			#pragma region Assign
 			if(token.getTipo() == TokenType::ID)
 			{
-				Statementp();
+				return Statementp();
+			}
+			#pragma endregion
 
-			}else if(token.getTipo() == TokenType::KW_READ || token.getTipo() == TokenType::KW_PRINT)
+			#pragma region Read/Print Method_Call
+			else if(token.getTipo() == TokenType::KW_READ || token.getTipo() == TokenType::KW_PRINT)
 			{
-				methodcall();
+				return methodcall();
 			}
 			#pragma endregion 
-	
-			#pragma region IF_STATEMENT
 
+			#pragma region IF_STATEMENT
 			else if(token.getTipo() == TokenType::KW_IF)
 			{
 				token = lex->NextToken();
-				expr();
+				Expr *cond = expr();
 			
 				if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 				{
 					token = lex->NextToken();
-					block();
+					BlockStatement *blck = dynamic_cast<BlockStatement *> (block());
+
+					IfStatement *if_stmnt = new IfStatement(cond, blck);
 					
 					while(token.getTipo() == TokenType::KW_ELIF)
 					{
 						token = lex->NextToken();
-						expr();
+						Expr *elif_cond = expr();
 			
 						if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 						{
 							token = lex->NextToken();
-							block();
+							BlockStatement *elif_blck = dynamic_cast<BlockStatement *>(block());
 
+							ElseIfBlockStatement *elif_blck_stmnt = new ElseIfBlockStatement(elif_cond, elif_blck);
+
+							if_stmnt->elifBlock_list.push_back(elif_blck_stmnt);
 						}else 
 						{
 							throw PythonError("Statement->IF","Se Esperaban : al final de la Expresion");
@@ -370,108 +395,122 @@ public:
 						if(token.getTipo() ==TokenType::SIGN_DOSPUNTOS)
 						{
 							token = lex->NextToken();
-							block();
+							BlockStatement *else_blck = dynamic_cast<BlockStatement *>(block());
+
+							if_stmnt->elseBlock = else_blck;
 						}else 
 						{
 							throw PythonError("Statement->IF->ELSE","Se Esperaba : Luego del Else");
 						}
 					}
 
+					return if_stmnt;
+
 				}else 
 				{
 					throw PythonError("Statement->IF","Se Esperaba : Luego de la Expresion");
 				}
-					#pragma endregion
+			}
+			#pragma endregion
 
 			#pragma region WHILE_STATEMENT
-				}else if(token.getTipo() == TokenType::KW_WHILE)
+			else if(token.getTipo() == TokenType::KW_WHILE)
+			{
+				token = lex->NextToken();
+				Expr *cond = expr();	
+
+				if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 				{
 					token = lex->NextToken();
-					expr();	
+					BlockStatement *blck = dynamic_cast<BlockStatement *> (block());
 
-					if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
-					{
-						token = lex->NextToken();
-						block();
-					}else 
-					{
-						throw PythonError("Statement->While","Se Esperaba : Luego de Expr");
-					}
-				#pragma endregion 
-					
+					return new WhileStatement(cond, blck);
+				}else 
+				{
+					throw PythonError("Statement->While","Se Esperaba : Luego de Expr");
+				}
+			}
+			#pragma endregion
+
 			#pragma region FOR_STATEMENT
-				}else if(token.getTipo() == TokenType::KW_FOR)
+			else if(token.getTipo() == TokenType::KW_FOR)
+			{
+				token = lex->NextToken();
+
+				if(token.getTipo() == TokenType::ID)
 				{
+					ForStatement *for_stmnt = new ForStatement(token.lexema);
 					token = lex->NextToken();
 
-					if(token.getTipo() == TokenType::ID)
+					if(token.getTipo() == TokenType::KW_IN)
 					{
 						token = lex->NextToken();
+						range(for_stmnt);
 
-						if(token.getTipo() == TokenType::KW_IN)
+						if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 						{
 							token = lex->NextToken();
-							range();
+							for_stmnt->block = dynamic_cast<BlockStatement*>(block());
 
-							if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
-							{
-								token = lex->NextToken();
-								block();
-							}else
-							{ 
-								throw PythonError("Statement->FOR","Se Esperaba : luego del Rango");
-							}
-
-						}else 
-						{
-							throw PythonError("Statement->FOR","Se Esperaba Palabra Reservada in");
+							return for_stmnt;
+						}else
+						{ 
+							throw PythonError("Statement->FOR","Se Esperaba : luego del Rango");
 						}
-					}else
+
+					}else 
 					{
-						//throw exception("FOR: Se Esperaba un ID");
-						throw PythonError("Statement->FOR","Se Esperaba un ID");
-
+						throw PythonError("Statement->FOR","Se Esperaba Palabra Reservada in");
 					}
-
-				#pragma endregion
+				}else
+				{
+					//throw exception("FOR: Se Esperaba un ID");
+					throw PythonError("Statement->FOR","Se Esperaba un ID");
+				}
+			}
+			#pragma endregion
 
 			#pragma region RETURN_STATEMENT
-				}else if(token.getTipo() == TokenType::KW_RETURN)
-				{
-					token = lex->NextToken();
-					expr();
-				
+			else if(token.getTipo() == TokenType::KW_RETURN)
+			{
+				token = lex->NextToken();
+				Expr *e = expr();
+				return new ReturnStatement(e);
+			}	
 			#pragma endregion
-			
+
 			#pragma region BREAK_STATEMENT
-				}else if(token.getTipo() == TokenType::KW_BREAK)
-				{
-					token = lex->NextToken();
-				}
+			else if(token.getTipo() == TokenType::KW_BREAK)
+			{
+				token = lex->NextToken();
+				return new BreakStatement();
+			}
 			#pragma endregion
-
-
 		}catch (char* e)
         {
 			throw PythonError("Statement",e);
-         }
+        }
 	}
 
-	void Statementp()
+	Statement* Statementp()
 	{
-		try{
+		try
+		{
 			if(token.getTipo() == TokenType::ID)
 			{
-				MethodCallExpr *mtc = new MethodCallExpr(token.lexema);
+				IDExpr *id = new IDExpr(token.lexema);
 				token = lex->NextToken();
 
-				if(token.getTipo() == TokenType::OP_ASIG || token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
+				if (token.getTipo() == TokenType::OP_ASIG ||
+					token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
 				{
-					assignP();
-
-				}else if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
+					return assignP(id);
+				}
+				else if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
 				{
-					methodcall2(mtc);
+					MethodCallExpr *mtc = new MethodCallExpr(id->varname);
+					mtc = (MethodCallExpr *)methodcall2(mtc);
+					return new MethodCallStatement(mtc);
 				}
 			}
 		}catch(char* e)
@@ -480,48 +519,54 @@ public:
          }
 	}
 
-	void assign()
+	Statement* assign()
 	{
 		try
 		{
-			lvalue();
+			IDExpr *id = new IDExpr(token.lexema);
+			token = lex->NextToken();
+
+			Expr *lval = lvalue(id);
 
 			if(token.getTipo()  == TokenType::OP_ASIG)
 			{
 				token = lex->NextToken();
-				expr();
-			}else
+				Expr *rval = expr();
+				return new AssignStatement(lval, rval);
+			}
+			else
 			{
 				throw PythonError("ASSIGN","Se Esperaba Operador de Asignacion");
 			}
-
-			//token = lex->NextToken();
-			
-		}catch (char* e)
+		}
+		catch (char* e)
         {
 			string error = "assign: ";
 			throw exception(error.append(e).c_str());
-         }
+        }
 	}
 
-	void assignP()
+	Statement* assignP(IDExpr *inherit)
 	{
 		try
 		{
-		
 			if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
 			{
 				token = lex->NextToken();
-				expr();
+				Expr *idx = expr();
 
 				if(token.getTipo()==TokenType::SIGNO_BRACKET_DER)
 				{
 					token = lex->NextToken();
 
+					ArrayExpr *arr = new ArrayExpr(inherit->varname, idx);
+
 					if(token.getTipo() == TokenType::OP_ASIG)
 					{
 						token = lex->NextToken();
-						expr();
+						Expr * rval = expr();
+
+						return new AssignStatement(arr, rval);
 					}else
 					{
 						throw PythonError("assignP","Se Esperaba =");
@@ -535,85 +580,60 @@ public:
 			if(token.getTipo()  == TokenType::OP_ASIG)
 			{
 				token =lex->NextToken();
-				expr();
+				Expr *rval =  expr();
+				
+				return new AssignStatement(inherit, rval);
 			}else
 			{
 				throw PythonError("assignP","Se Esperaba Operador de Asignacion");
-			}
-
-//			token = lex->NextToken();
-			
+			}			
 		}catch (char* e)
         {
 			throw PythonError("assignP",e);	
         }
 	}
 
-	void methodcall()
+	Statement* methodcall()
 	{
 		try
 		{
-		/*	#pragma region ID_METHODCALL
-			if(token.getTipo() == TokenType::ID)
-			{
+			#pragma region PRINT_METHODCALL	
+			if(token.getTipo() == TokenType::KW_PRINT) 
+			{			
 				token = lex->NextToken();
 
-				if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
+				PrintStatement *print = new PrintStatement();
+
+				if (Es_expresion()) {
+					Expr *printexpr = expr();
+					print->printlist.push_back(printexpr);
+				} else 
+				{
+					throw PythonError("METHODCALL-> PRINT","Se Esperaba una expresion");
+				}
+
+				while(token.getTipo() == TokenType::SIGN_COMA)
 				{
 					token = lex->NextToken();
-
-					while(Es_expresion())
-					{
-						expr();
-
-						if(token.getTipo() == TokenType::SIGN_COMA)
-						{
-							token = lex->NextToken();
-						}else
-						{
-							throw PythonError("METHODCALL","Se Esperaba una coma luego de la expresion");
-						}
-
-					}
-					token = lex->NextToken();
-					if(token.getTipo() == TokenType::SIGNO_PARENTESIS_DER)
-					{
-						token = lex->NextToken();
-
-					}else{
-						throw PythonError("METHODCALL","Se Esperaba Cierre de Parentesis");
-					}
+					Expr *printexpr = expr();
+					print->printlist.push_back(printexpr);
 				}
-			#pragma endregion 
-			}*/
-			#pragma region PRINT_METHODCALL	
-			 if(token.getTipo() == TokenType::KW_PRINT) 
-			{			
-					token = lex->NextToken();
 
-					if (Es_expresion()) {
-						Expr *printexpr = expr();
-					} else 
-					{
-						throw PythonError("METHODCALL-> PRINT","Se Esperaba una expresion");
-					}
-
-					while(token.getTipo() == TokenType::SIGN_COMA)
-					{
-						token = lex->NextToken();
-						expr();
-					}
-
+				return print;
+			}
 			#pragma endregion
 
 			#pragma region READ_METHODCALL
-			}else if(token.getTipo() == TokenType::KW_READ)
+			else if(token.getTipo() == TokenType::KW_READ)
 			{
 				token = lex->NextToken();
 				if(token.getTipo() == TokenType::ID)
 				{
+					IDExpr *id = new IDExpr(token.lexema);
 					token = lex->NextToken();
-					lvalue();
+					Expr *lvlExpr = lvalue(id);
+
+					return new ReadStatement(lvlExpr);
 				}else
 					throw PythonError("METHODCALL","Se Esperaba un ID despues de la palabra reservada READ");
 			}
@@ -622,7 +642,7 @@ public:
 		}catch (char* e)
         {
 			throw PythonError("METHODCALL",e);
-         }
+        }
 	}
 
 	Expr* methodcall2(MethodCallExpr* inherit)
@@ -631,56 +651,57 @@ public:
 		{
 			if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
 			{
-					token = lex->NextToken();
+				token = lex->NextToken();
 
-					if(Es_expresion()){
+				if(Es_expresion())
+				{
+					Expr *ep = expr();	
+					inherit->Parametros.push_back(ep);
+
+					while(token.getTipo() == TokenType::SIGN_COMA)
+					{
+						token = lex->NextToken();
 						Expr *ep = expr();	
 						inherit->Parametros.push_back(ep);
-
-						while(token.getTipo() == TokenType::SIGN_COMA)
-						{
-							token = lex->NextToken();
-							Expr *ep = expr();	
-							inherit->Parametros.push_back(ep);
-						}
-						//token = lex->NextToken();
 					}
-			}else
+				}
+			}
+			else
 				throw PythonError("METHODCALL2","Se esperaba (");
 
 			if(token.getTipo() == TokenType::SIGNO_PARENTESIS_DER)
 			{
 				token = lex->NextToken();
-
-			}else{
+			}
+			else
+			{
 				throw PythonError("METHODCALL2","Se Esperaba )");
 			}
 
 			return inherit;
-
 		}catch (char* e)
         {
 			throw PythonError("METHODCALL2",e);
-         }
+        }
 	}
 
-	void lvalue()
+	Expr* lvalue(IDExpr *inherit)
 	{
 		try
 		{
-			if(token.getTipo() == TokenType::ID)
+			if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
 			{
+				Expr *idx = NULL;
+
 				token = lex->NextToken();
-			}else if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
-			{
-					token = lex->NextToken();
-					if(Es_expresion())
-					{
-						expr();
-					}else
-					{
-						throw PythonError("lvalue","Se Esperaba Una Expresion");
-					}
+
+				if(Es_expresion())
+				{
+					idx = expr();
+				}else
+				{
+					throw PythonError("lvalue","Se Esperaba Una Expresion");
+				}
 
 				if(token.getTipo() == TokenType::SIGNO_BRACKET_DER)
 				{
@@ -689,19 +710,25 @@ public:
 				{
 					throw PythonError("lvalue","Se Esperaba [ o ]");
 				}
+
+				return new ArrayExpr(inherit->varname, idx);
+			}
+			else
+			{
+				return inherit;
 			}
 		}catch (char* e)
         {
 			throw PythonError("lvalue",e);
-         }
+        }
 	}
 
 	Expr* expr()
 	{
 		try
 		{
-			if(Es_expresion()){
-
+			if(Es_expresion())
+			{
 				if(token.getTipo() == TokenType::ID /*|| token.getTipo() == TokenType::KW_PRINT || token.getTipo() == TokenType::KW_READ*/
 					|| token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ || token.getTipo() == TokenType::LIT_CADENA 
 					|| Numero() || Boolean())
@@ -722,110 +749,8 @@ public:
 						token = lex->NextToken();
 						return new InvertExpr(expr());
 					}
-				
-				#pragma endregion
-						
-				}/*#pragma region [ <expr> ]
-								 else if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
-				{
-					token = lex->NextToken();
-					expr();
-
-					while(token.getTipo() == TokenType::SIGN_COMA)
-					{
-						token = lex->NextToken();
-						expr();
-					}
-
-					if(token.getTipo() == TokenType::SIGNO_BRACKET_DER)
-					{
-						token = lex->NextToken();
-					}else
-						throw PythonError("expr","Se Esperaba ]");
-				}else
-				#pragma endregion
-
-				#pragma region ( <expr> )
-				if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
-				{
-					token = lex->NextToken();
-
-					expr();
-
-					if(token.getTipo() == TokenType::SIGNO_PARENTESIS_DER)
-					{
-						token = lex->NextToken();
-					}else 
-					{
-						throw PythonError("expr","Se Esperaba )");
-					}
 				}
-				#pragma endregion*/
-
-				#pragma region used_To	
-			/*	#pragma region LVALUE | METHODCALL
-				if(token.getTipo() == TokenType::ID)
-				{
-					exprP();
-
-				}if(token.getTipo() == TokenType::KW_READ || token.getTipo() == TokenType::KW_PRINT)
-				{
-					methodcall();
 				#pragma endregion
-
-				#pragma region CONSTANT & EXPR <OP_BIN> EXPR
-				}if (Numero() || Boolean() || token.getTipo() == TokenType::LIT_CADENA)
-				{
-					constant();
-
-				}if(Es_expresion())
-				{
-					op_bin();
-					expr();
-				#pragma endregion
-
-				#pragma region - <expr> & ~ <expr>
-				}if(token.getTipo() == TokenType::OP_REST || token.getTipo() == TokenType::OP_NEGACION)
-				{
-					expr();
-				#pragma endregion
-
-				#pragma region ( <expr> )
-				}if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
-				{
-					token = lex->NextToken();
-
-					expr();
-
-					if(token.getTipo() == TokenType::SIGNO_PARENTESIS_DER)
-					{
-						token = lex->NextToken();
-					}else 
-					{
-						throw PythonError("expr","Se Esperaba )");
-					}
-				#pragma endregion
-
-				#pragma region [ <expr> ]		
-				}if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
-				{
-					token = lex->NextToken();
-					expr();
-
-					while(token.getTipo() == TokenType::SIGN_COMA)
-					{
-						token = lex->NextToken();
-						expr();
-					}
-
-					if(token.getTipo() == TokenType::SIGNO_BRACKET_DER)
-					{
-						token = lex->NextToken();
-					}else
-						throw PythonError("expr","Se Esperaba ]");
-				}*/
-			
-			#pragma endregion
 			}else
 			{
 				throw PythonError("expr","Se Esperaba Expresion");
@@ -833,7 +758,7 @@ public:
 		}catch (char* e)
         {
 			throw PythonError("expr",e);
-         }
+        }
 	}
 
 	Expr* Relacional()
@@ -1008,7 +933,6 @@ public:
 			{
 				token = lex->NextToken();
 				Expr *termino = expr();
-				//expr();
 
 				if(token.getTipo() == TokenType::SIGNO_PARENTESIS_DER)
 				{
@@ -1024,10 +948,6 @@ public:
 			{
 				IDExpr *id = new IDExpr(token.lexema);
 				return exprP(id);
-
-			/*}else if(token.getTipo() == TokenType::KW_READ || token.getTipo() == TokenType::KW_PRINT)
-			{
-				methodcall();*/
 			}else
 				PythonError("Term","Se Esperaba Termino");
 
@@ -1108,16 +1028,19 @@ public:
          }
 	}
 	
-	void range()
+	void range(ForStatement *inherit)
 	{
 		try
 		{
-			expr();
+			Expr *init = expr();
 
 			if(token.getTipo() == TokenType::OP_RANGO)
 			{
 				token = lex->NextToken();
-				expr();
+				Expr *end = expr();
+
+				inherit->exprInicial = init;
+				inherit->exprFinal = end;
 			}else 
 				throw PythonError("range","Se esperaba ...");
 

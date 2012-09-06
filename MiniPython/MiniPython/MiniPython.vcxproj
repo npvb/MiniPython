@@ -77,6 +77,7 @@
     <ClInclude Include="AST.h" />
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Parser.h" />
+    <ClInclude Include="Tipos.h" />
     <ClInclude Include="Token.h" />
   </ItemGroup>
   <ItemGroup>

@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include "Tipos.h"
 
 using namespace std;
 extern int fila;
@@ -31,6 +32,13 @@ public:
 #pragma region Expresiones
 class Expr: public ASTNode
 {
+public:
+	
+	virtual Tipo* validarSemantica() 
+	{
+		throw ASTError("validarSemantica","Error Semantica");
+	}
+
 };
 
  #pragma region OpBinario
@@ -52,10 +60,32 @@ class MayorExpr : public OpBinExpr
 {
 public:
 	MayorExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-
+	
 	virtual string ToString()
 	{
 		return expr_izq->ToString() + " > " + expr_der->ToString();
+	}
+
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+		Tipo *t_der = expr_der->validarSemantica();
+		
+		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
+		{
+			return new Tipo_Booleano();
+
+		}else
+
+		throw ASTError("MayorExpr","Tipos de la Expresion MAYOR (>) deben ser: booleano, flotante o caracter");
 	}
 };
 
@@ -68,15 +98,60 @@ public:
 	{
 		return expr_izq->ToString() + " < " + expr_der->ToString();
 	}
+
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+		Tipo *t_der = expr_der->validarSemantica();
+		
+		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
+		{
+			return new Tipo_Booleano();
+
+		}else
+
+		throw ASTError("MenorExpr","Tipos de la Expresion MENOR (<) deben ser: booleano, flotante o caracter");
+	}
 };
 
 class MayorIgualExpr : public OpBinExpr
 {
 public:
 	MayorIgualExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
+
 	virtual string ToString()
 	{
 		return expr_izq->ToString() + " >= " + expr_der->ToString();
+	}
+
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+		Tipo *t_der = expr_der->validarSemantica();
+		
+		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
+		{
+			return new Tipo_Booleano();
+
+		}else
+
+		throw ASTError("MayorIgualExpr","Tipos de la Expresion MAYOR IGUAL (>=) deben ser: booleano, flotante o caracter");
 	}
 };
 
@@ -89,6 +164,28 @@ public:
 	{
 		return expr_izq->ToString() + " <= " + expr_der->ToString();
 	}
+
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+		Tipo *t_der = expr_der->validarSemantica();
+		
+		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
+		{
+			return new Tipo_Booleano();
+
+		}else
+
+		throw ASTError("MenorExpr","Tipos de la Expresion MENOR (<) deben ser: booleano, flotante o caracter");
+	}
 };
 
 class DistintoExpr : public OpBinExpr
@@ -98,6 +195,27 @@ public:
 	virtual string ToString()
 	{
 		return expr_izq->ToString() + " != " + expr_der->ToString();
+	}
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+		Tipo *t_der = expr_der->validarSemantica();
+		
+		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
+		{
+			return new Tipo_Booleano();
+
+		}else
+
+		throw ASTError("DistintoExpr","Tipos de la Expresion -DISTINTO DE (!=) deben ser: booleano, flotante o caracter");
 	}
 };
 
@@ -109,6 +227,28 @@ public:
 	{
 		return expr_izq->ToString() + " == " + expr_der->ToString();
 	}
+
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+		Tipo *t_der = expr_der->validarSemantica();
+		
+		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
+		{
+			return new Tipo_Booleano();
+
+		}else
+
+		throw ASTError("IgualExpr","Tipos de la Expresion IGUAL (=) deben ser: booleano, flotante o caracter");
+	}
 };
 
 class ModExpr : public OpBinExpr
@@ -118,6 +258,23 @@ public:
 	virtual string ToString()
 	{
 		return expr_izq->ToString() + " % " + expr_der->ToString();
+	}
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+		Tipo *t_der = expr_der->validarSemantica();
+		
+		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
+		{
+			return new Tipo_Booleano();
+
+		}else
+
+		throw ASTError("MayorExpr","Tipos de la Expresion MAYOR deben ser: booleano, flotante o caracter");
 	}
 };
 
@@ -129,6 +286,28 @@ public:
 	{
 		return expr_izq->ToString() + " and " + expr_der->ToString();
 	}
+
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+		Tipo *t_der = expr_der->validarSemantica();
+		
+		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
+		{
+			return new Tipo_Booleano();
+
+		}else
+
+		throw ASTError("ANDExpr","Tipos de la Expresion AND deben ser: booleano, flotante o caracter");
+	}
 };
 
 class OrExpr : public OpBinExpr
@@ -138,6 +317,28 @@ public:
 	virtual string ToString()
 	{
 		return expr_izq->ToString() + " or " + expr_der->ToString();
+	}
+
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+		Tipo *t_der = expr_der->validarSemantica();
+		
+		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
+		{
+			return new Tipo_Booleano();
+
+		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
+		{
+			return new Tipo_Booleano();
+
+		}else
+
+		throw ASTError("ORExpr","Tipos de la Expresion OR deben ser: booleano, flotante o caracter");
 	}
 };
 
@@ -149,6 +350,24 @@ public:
 	{
 		return expr_izq->ToString() + " + " + expr_der->ToString();
 	}
+
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+        Tipo *t_der = expr_der->validarSemantica();
+
+		if (t_izq->getTipo()==Types::entero && t_der->getTipo()==Types::entero)
+		{
+           return t_der;
+
+		}else if (t_izq->getTipo()==Types::charconstant && t_der->getTipo()==Types::charconstant)
+		{
+			return t_der;
+		}else
+
+		throw ASTError("SumaExpr","Tipos Invalidos");
+
+	}
 };
 
 class RestaExpr : public OpBinExpr
@@ -158,6 +377,24 @@ public:
 	virtual string ToString()
 	{
 		return expr_izq->ToString() + " - " + expr_der->ToString();
+	}
+
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+        Tipo *t_der = expr_der->validarSemantica();
+
+		if (t_izq->getTipo()==Types::entero && t_der->getTipo()==Types::entero)
+		{
+           return t_der;
+
+		}else if (t_izq->getTipo()==Types::charconstant && t_der->getTipo()==Types::charconstant)
+		{
+			return t_der;
+		}else
+
+		throw ASTError("RestaExpr","Tipos Invalidos");
+
 	}
 };
 
@@ -169,6 +406,24 @@ public:
 	{
 		return expr_izq->ToString() + " / " + expr_der->ToString();
 	}
+
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+        Tipo *t_der = expr_der->validarSemantica();
+
+		if (t_izq->getTipo()==Types::entero && t_der->getTipo()==Types::entero)
+		{
+           return t_der;
+
+		}else if (t_izq->getTipo()==Types::charconstant && t_der->getTipo()==Types::charconstant)
+		{
+			return t_der;
+		}else
+
+		throw ASTError("DivisionExpr","Tipos Invalidos");
+
+	}
 };
 
 class MultiplicacionExpr : public OpBinExpr
@@ -178,6 +433,24 @@ public:
 	virtual string ToString()
 	{
 		return expr_izq->ToString() + " * " + expr_der->ToString();
+	}
+
+	virtual Tipo* validarSemantica()
+	{
+		Tipo *t_izq = expr_izq->validarSemantica();
+        Tipo *t_der = expr_der->validarSemantica();
+
+		if (t_izq->getTipo()==Types::entero && t_der->getTipo()==Types::entero)
+		{
+           return t_der;
+
+		}else if (t_izq->getTipo()==Types::charconstant && t_der->getTipo()==Types::charconstant)
+		{
+			return t_der;
+		}else
+
+		throw ASTError("MultiplicacionExpr","Tipos Invalidos");
+
 	}
 };
 
@@ -353,9 +626,7 @@ public:
 };
 #pragma endregion
 
-#pragma endregion
-
-#pragma region Statements
+ #pragma region Statements
 
 class Statement : public ASTNode
 {
@@ -614,7 +885,7 @@ public:
 
 #pragma endregion
 
-#pragma region Program
+ #pragma region Program
 
 class FieldDeclNode : public ASTNode
 {

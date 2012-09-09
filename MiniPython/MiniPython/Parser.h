@@ -1,3 +1,5 @@
+#ifndef PARSER_H
+#define PARSER_H
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -1090,3 +1092,5 @@ public:
          }
 	}
 };
+
+#endif

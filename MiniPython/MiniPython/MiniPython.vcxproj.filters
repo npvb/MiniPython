@@ -30,13 +30,13 @@
     <ClInclude Include="AST.h">
       <Filter>Parser</Filter>
     </ClInclude>
-    <ClInclude Include="Tipos.h">
-      <Filter>Parser</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AST.cpp">
+      <Filter>Parser</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

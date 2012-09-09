@@ -1,3 +1,5 @@
+#ifndef AST_H
+#define AST_H
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -5,10 +7,12 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include "Tipos.h"
+#include <map>
 
 using namespace std;
 extern int fila;
+
+class Tipo;
 
 class ASTNode
 {
@@ -16,29 +20,19 @@ public:
 	int linea;
 	virtual string ToString() = 0;
 
-	ASTNode()
-	{
-		linea = fila;
-	}
-
-	exception ASTError(string nombre_funcion,string descripcion)
-	{
-		stringstream msg;
-		msg << "Error de: " << nombre_funcion << "-> " << descripcion << "\nFila # "<<linea<<endl;
-		throw exception(msg.str().c_str());
-	}
+	ASTNode();
+	exception ASTError(string nombre_funcion,string descripcion);
 };
 
-#pragma region Expresiones
+class EntornoTipos;
+
+ #pragma region Expresiones
 class Expr: public ASTNode
 {
 public:
-	
-	virtual Tipo* validarSemantica() 
-	{
-		throw ASTError("validarSemantica","Error Semantica");
-	}
-
+	Expr();
+	virtual Tipo* validarSemantica();
+	EntornoTipos* actTypeEnvironment;
 };
 
  #pragma region OpBinario
@@ -49,429 +43,136 @@ public:
 	Expr *expr_izq;
 	Expr *expr_der;
 
-	OpBinExpr(Expr *e1, Expr *e2)
-	{
-		expr_izq = e1;
-		expr_der = e2;
-	}
+	OpBinExpr(Expr *e1, Expr *e2);
 };
 
 class MayorExpr : public OpBinExpr
 {
 public:
-	MayorExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
+	MayorExpr(Expr *e1, Expr *e2);
 	
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " > " + expr_der->ToString();
-	}
-
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-		Tipo *t_der = expr_der->validarSemantica();
-		
-		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
-		{
-			return new Tipo_Booleano();
-
-		}else
-
-		throw ASTError("MayorExpr","Tipos de la Expresion MAYOR (>) deben ser: booleano, flotante o caracter");
-	}
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class MenorExpr : public OpBinExpr
 {
 public:
-	MenorExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
+	MenorExpr(Expr *e1, Expr *e2);
 
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " < " + expr_der->ToString();
-	}
-
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-		Tipo *t_der = expr_der->validarSemantica();
-		
-		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
-		{
-			return new Tipo_Booleano();
-
-		}else
-
-		throw ASTError("MenorExpr","Tipos de la Expresion MENOR (<) deben ser: booleano, flotante o caracter");
-	}
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class MayorIgualExpr : public OpBinExpr
 {
 public:
-	MayorIgualExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
+	MayorIgualExpr(Expr *e1, Expr *e2);
 
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " >= " + expr_der->ToString();
-	}
-
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-		Tipo *t_der = expr_der->validarSemantica();
-		
-		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
-		{
-			return new Tipo_Booleano();
-
-		}else
-
-		throw ASTError("MayorIgualExpr","Tipos de la Expresion MAYOR IGUAL (>=) deben ser: booleano, flotante o caracter");
-	}
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class MenorIgualExpr : public OpBinExpr
 {
 public:
-	MenorIgualExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
+	MenorIgualExpr(Expr *e1, Expr *e2);
 
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " <= " + expr_der->ToString();
-	}
-
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-		Tipo *t_der = expr_der->validarSemantica();
-		
-		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
-		{
-			return new Tipo_Booleano();
-
-		}else
-
-		throw ASTError("MenorExpr","Tipos de la Expresion MENOR (<) deben ser: booleano, flotante o caracter");
-	}
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class DistintoExpr : public OpBinExpr
 {
 public:
-	DistintoExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " != " + expr_der->ToString();
-	}
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-		Tipo *t_der = expr_der->validarSemantica();
-		
-		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
-		{
-			return new Tipo_Booleano();
-
-		}else
-
-		throw ASTError("DistintoExpr","Tipos de la Expresion -DISTINTO DE (!=) deben ser: booleano, flotante o caracter");
-	}
+	DistintoExpr(Expr *e1, Expr *e2);
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class IgualExpr : public OpBinExpr
 {
 public:
-	IgualExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " == " + expr_der->ToString();
-	}
-
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-		Tipo *t_der = expr_der->validarSemantica();
-		
-		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
-		{
-			return new Tipo_Booleano();
-
-		}else
-
-		throw ASTError("IgualExpr","Tipos de la Expresion IGUAL (=) deben ser: booleano, flotante o caracter");
-	}
+	IgualExpr(Expr *e1, Expr *e2);
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class ModExpr : public OpBinExpr
 {
 public:
-	ModExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " % " + expr_der->ToString();
-	}
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-		Tipo *t_der = expr_der->validarSemantica();
-		
-		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
-		{
-			return new Tipo_Booleano();
+	ModExpr(Expr *e1, Expr *e2);
 
-		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
-		{
-			return new Tipo_Booleano();
-
-		}else
-
-		throw ASTError("MayorExpr","Tipos de la Expresion MAYOR deben ser: booleano, flotante o caracter");
-	}
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class AndExpr : public OpBinExpr
 {
 public:
-	AndExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " and " + expr_der->ToString();
-	}
+	AndExpr(Expr *e1, Expr *e2);
 
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-		Tipo *t_der = expr_der->validarSemantica();
-		
-		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
-		{
-			return new Tipo_Booleano();
-
-		}else
-
-		throw ASTError("ANDExpr","Tipos de la Expresion AND deben ser: booleano, flotante o caracter");
-	}
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class OrExpr : public OpBinExpr
 {
 public:
-	OrExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " or " + expr_der->ToString();
-	}
+	OrExpr(Expr *e1, Expr *e2);
 
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-		Tipo *t_der = expr_der->validarSemantica();
-		
-		if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
-		{
-			return new Tipo_Booleano();
-
-		}else if(t_izq->getTipo() == Types::charconstant && t_der->getTipo() == Types::charconstant)
-		{
-			return new Tipo_Booleano();
-
-		}else
-
-		throw ASTError("ORExpr","Tipos de la Expresion OR deben ser: booleano, flotante o caracter");
-	}
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class SumaExpr : public OpBinExpr
 {
 public:
-	SumaExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " + " + expr_der->ToString();
-	}
+	SumaExpr(Expr *e1, Expr *e2);
 
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-        Tipo *t_der = expr_der->validarSemantica();
-
-		if (t_izq->getTipo()==Types::entero && t_der->getTipo()==Types::entero)
-		{
-           return t_der;
-
-		}else if (t_izq->getTipo()==Types::charconstant && t_der->getTipo()==Types::charconstant)
-		{
-			return t_der;
-		}else
-
-		throw ASTError("SumaExpr","Tipos Invalidos");
-
-	}
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class RestaExpr : public OpBinExpr
 {
 public:
-	RestaExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " - " + expr_der->ToString();
-	}
+	RestaExpr(Expr *e1, Expr *e2);
 
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-        Tipo *t_der = expr_der->validarSemantica();
-
-		if (t_izq->getTipo()==Types::entero && t_der->getTipo()==Types::entero)
-		{
-           return t_der;
-
-		}else if (t_izq->getTipo()==Types::charconstant && t_der->getTipo()==Types::charconstant)
-		{
-			return t_der;
-		}else
-
-		throw ASTError("RestaExpr","Tipos Invalidos");
-
-	}
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class DivisionExpr : public OpBinExpr
 {
 public:
-	DivisionExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " / " + expr_der->ToString();
-	}
+	DivisionExpr(Expr *e1, Expr *e2);
 
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-        Tipo *t_der = expr_der->validarSemantica();
-
-		if (t_izq->getTipo()==Types::entero && t_der->getTipo()==Types::entero)
-		{
-           return t_der;
-
-		}else if (t_izq->getTipo()==Types::charconstant && t_der->getTipo()==Types::charconstant)
-		{
-			return t_der;
-		}else
-
-		throw ASTError("DivisionExpr","Tipos Invalidos");
-
-	}
+	string ToString();
+	Tipo* validarSemantica();
 };
 
 class MultiplicacionExpr : public OpBinExpr
 {
 public:
-	MultiplicacionExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " * " + expr_der->ToString();
-	}
+	MultiplicacionExpr(Expr *e1, Expr *e2);
+	string ToString();
 
-	virtual Tipo* validarSemantica()
-	{
-		Tipo *t_izq = expr_izq->validarSemantica();
-        Tipo *t_der = expr_der->validarSemantica();
-
-		if (t_izq->getTipo()==Types::entero && t_der->getTipo()==Types::entero)
-		{
-           return t_der;
-
-		}else if (t_izq->getTipo()==Types::charconstant && t_der->getTipo()==Types::charconstant)
-		{
-			return t_der;
-		}else
-
-		throw ASTError("MultiplicacionExpr","Tipos Invalidos");
-
-	}
+	Tipo* validarSemantica();
 };
 
 class ShiftLeftExpr : public OpBinExpr
 {
 public:
-	ShiftLeftExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " << " + expr_der->ToString();
-	}
+	ShiftLeftExpr(Expr *e1, Expr *e2);
+	string ToString();
 };
 
 class ShiftRightExpr : public OpBinExpr
 {
 public:
-	ShiftRightExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
-	virtual string ToString()
-	{
-		return expr_izq->ToString() + " >> " + expr_der->ToString();
-	}
+	ShiftRightExpr(Expr *e1, Expr *e2);
+	string ToString();
 };
 #pragma endregion
 
@@ -481,33 +182,23 @@ class UnaryExpr : public Expr
 public:
 	Expr *expresion;
 
-	UnaryExpr(Expr *e)
-	{
-		expresion = e;
-	}
-	
+	UnaryExpr(Expr *e);	
 };
 
 class NegateExpr : public UnaryExpr
 {
 public:
-	NegateExpr(Expr *e):UnaryExpr(e){}
+	NegateExpr(Expr *e);
 
-	virtual string ToString()
-	{
-		return " (-) " + expresion->ToString();
-	}
+	string ToString();
 };
 
 class InvertExpr : public UnaryExpr
 {
 public:
-	InvertExpr(Expr *e):UnaryExpr(e){}
+	InvertExpr(Expr *e);
 
-	virtual string ToString()
-	{
-		return " ~ " + expresion->ToString();
-	}
+	string ToString();
 };
 
 #pragma endregion
@@ -521,30 +212,21 @@ class NumExpr : public ConstantExpr
 {
 public:
 
-	virtual string ToString()
-	{
-		return " NUM ";
-	}
+	string ToString();
 };
 
 class CharExpr : public ConstantExpr
 {
 public:
 
-	virtual string ToString()
-	{
-		return " CHAR ";
-	}
+	string ToString();
 };
 
 class BooleanExpr : public ConstantExpr
 {
 public:
 
-	virtual string ToString()
-	{
-		return " BOOLEAN ";
-	}
+	string ToString();
 };
 #pragma endregion
 
@@ -554,37 +236,24 @@ class LValueExpr : public Expr
 public:
 	string varname;
 
-	LValueExpr(string nombre)
-	{
-		varname = nombre;
-	}
-	
+	LValueExpr(string nombre);	
 };
 
 class IDExpr : public LValueExpr
 {
 public:
-	IDExpr(string nom):LValueExpr(nom){}
+	IDExpr(string nom);
 
-	virtual string ToString()
-	{
-		return " "+varname+" ";
-	}
+	string ToString();
 };
 
 class ArrayExpr : public LValueExpr
 {
 public:
 	Expr *index;
-	ArrayExpr(string nom,Expr *idx):LValueExpr(nom)
-	{
-		index = idx;
-	}
+	ArrayExpr(string nom,Expr *idx);
 
-	virtual string ToString()
-	{
-		return " "+varname+" ["+index->ToString()+"] ";
-	}
+	string ToString();
 };
 
 class MethodCallExpr : public Expr
@@ -593,37 +262,13 @@ public:
 	vector<Expr*> Parametros;
 	string nombre_funcion;
 
-	MethodCallExpr(string nombre_func)
-	{
-		nombre_funcion = nombre_func;
-	}
+	MethodCallExpr(string nombre_func);
 
-	virtual string ToString()
-	{
-		string retorno;
-		retorno = " "+nombre_funcion+" ";
-
-		if(!Parametros.empty())
-		{
-			retorno.append("(");
-
-			for(int x = 0; x<Parametros.size();x++)
-			{
-				retorno.append(Parametros[x]->ToString());
-
-				if(x != Parametros.size()-1)
-				{
-					retorno.append(",");
-				}
-			}
-
-			retorno.append(") ");
-		}else
-			retorno.append("() ");
-
-		return retorno;
-	}
+	string ToString();
+	Tipo* validarSemantica();
 };
+#pragma endregion
+
 #pragma endregion
 
  #pragma region Statements
@@ -637,17 +282,7 @@ class BlockStatement : public Statement
 public:
 	vector<Statement *> statements;
 
-	virtual string ToString()
-	{
-		string retorno = "";
-
-		for (int x = 0; x < statements.size(); x++)
-		{
-			retorno.append(statements[x]->ToString() + "\n");
-		}
-
-		return retorno;
-	}
+	string ToString();
 };
 
 class AssignStatement : public Statement
@@ -656,16 +291,9 @@ public:
 	Expr *leftValue;
 	Expr *rightValue;
 
-	AssignStatement(Expr *lvalue, Expr *rvalue)
-	{
-		leftValue = lvalue;
-		rightValue = rvalue;
-	}
+	AssignStatement(Expr *lvalue, Expr *rvalue);
 
-	virtual string ToString()
-	{
-		return leftValue->ToString() + " = " + rightValue->ToString();
-	}
+	string ToString();
 };
 
 class MethodCallStatement : public Statement
@@ -673,27 +301,9 @@ class MethodCallStatement : public Statement
 public:
 	MethodCallExpr *methodCall;
 
-	MethodCallStatement(MethodCallExpr *mtc)
-	{
-		methodCall = mtc;
-	}
+	MethodCallStatement(MethodCallExpr *mtc);
 
-	virtual string ToString()
-	{
-		string retorno = methodCall->nombre_funcion + "(";
-
-		for (int x = 0; x < methodCall->Parametros.size(); x++)
-		{
-			retorno.append(methodCall->Parametros[x]->ToString());
-
-			if (x != methodCall->Parametros.size() - 1)
-				retorno.append(", ");
-		}
-
-		retorno.append(")");
-
-		return retorno;
-	}
+	string ToString();
 };
 
 class ElseIfBlockStatement : public Statement
@@ -702,18 +312,9 @@ public:
 	Expr *condition;
 	BlockStatement *block;
 
-	ElseIfBlockStatement(Expr *cond, BlockStatement *blck)
-	{
-		condition = cond;
-		block = blck;
-	}
+	ElseIfBlockStatement(Expr *cond, BlockStatement *blck);
 
-	virtual string ToString()
-	{
-		string retorno = "else if (" + condition->ToString() + "):\n";
-		retorno += block->ToString();
-		return retorno;
-	}
+	string ToString();
 };
 
 class IfStatement : public Statement
@@ -724,33 +325,9 @@ public:
 	vector<ElseIfBlockStatement*> elifBlock_list;
 	BlockStatement *elseBlock;
 
-	IfStatement(Expr *cond, BlockStatement *ifBlck)
-	{
-		condition = cond;
-		ifBlock = ifBlck;
+	IfStatement(Expr *cond, BlockStatement *ifBlck);
 
-		elseBlock = NULL;
-	}
-
-	virtual string ToString()
-	{
-		string retorno;
-		retorno = "if (" + condition->ToString() + "):\n";
-		retorno += ifBlock->ToString();
-
-		for (int x = 0; x < elifBlock_list.size(); x++)
-		{
-			retorno += elifBlock_list[x]->ToString();
-		}
-
-		if (elseBlock != NULL)
-		{
-			retorno += "else \n";
-			retorno += elseBlock->ToString();
-		}
-
-		return retorno;
-	}
+	string ToString();
 };
 
 
@@ -766,19 +343,9 @@ public:
 	Expr *condition;
 	BlockStatement *block;
 
-	WhileStatement(Expr *cond, BlockStatement *blck)
-	{
-		condition = cond;
-		block = blck;
-	}
+	WhileStatement(Expr *cond, BlockStatement *blck);
 
-	virtual string ToString()
-	{
-		string retorno = "while (" + condition->ToString() + "):\n";
-		retorno += block->ToString();
-
-		return retorno;
-	}
+	string ToString();
 };
 
 class ForStatement : public IterationStatement
@@ -789,21 +356,9 @@ public:
 	Expr *exprFinal;
 	BlockStatement *block;
 
-	ForStatement(string vName)
-	{
-		varname = vName;
-		
-		exprInicial = exprFinal = NULL;
-		block = NULL;
-	}
+	ForStatement(string vName);
 
-	virtual string ToString()
-	{
-		string retorno = "for (" + varname + " in " + exprInicial->ToString() + " .. " + exprFinal->ToString() + "):\n";
-		retorno += block->ToString();
-
-		return retorno;
-	}
+	string ToString();
 };
 
 #pragma endregion
@@ -813,37 +368,25 @@ class ReturnStatement : public Statement
 public:
 	Expr *expr;
 
-	ReturnStatement(Expr *e)
-	{
-		expr = e;
-	}
+	ReturnStatement(Expr *e);
 
-	virtual string ToString()
-	{
-		return "return " + expr->ToString();
-	}
+	string ToString();
 };
 
 class BreakStatement : public Statement
 {
 public:
-	BreakStatement() { }
+	BreakStatement();
 
-	virtual string ToString()
-	{
-		return "break";
-	}
+	string ToString();
 };
 
 class ContinueStatement : public Statement
 {
 public:
-	ContinueStatement() { }
+	ContinueStatement();
 
-	virtual string ToString()
-	{
-		return "continue";
-	}
+	string ToString();
 };
 
 class ReadStatement : public Statement
@@ -851,15 +394,9 @@ class ReadStatement : public Statement
 public:
 	Expr *value;
 
-	ReadStatement(Expr *val)
-	{
-		value = val;
-	}
+	ReadStatement(Expr *val);
 
-	virtual string ToString()
-	{
-		return "read " + value->ToString();
-	}
+	string ToString();
 };
 
 class PrintStatement : public Statement
@@ -867,20 +404,7 @@ class PrintStatement : public Statement
 public:
 	vector<Expr *> printlist;
 
-	virtual string ToString()
-	{
-		string retorno = "print ";
-
-		for (int x = 0; x < printlist.size(); x++)
-		{
-			retorno += printlist[x]->ToString();
-
-			if (x != printlist.size() - 1)
-				retorno.append(", ");
-		}
-
-		return retorno;
-	}
+	string ToString();
 };
 
 #pragma endregion
@@ -892,15 +416,9 @@ class FieldDeclNode : public ASTNode
 public:
 	AssignStatement *decl_stmnt;
 
-	FieldDeclNode(AssignStatement *decl)
-	{
-		decl_stmnt = decl;
-	}
+	FieldDeclNode(AssignStatement *decl);
 
-	virtual string ToString()
-	{
-		return decl_stmnt->ToString();
-	}
+	string ToString();
 };
 
 class MethodDeclNode : public ASTNode
@@ -910,32 +428,9 @@ public:
 	vector<string> methodArguments;
 	BlockStatement *block;
 
-	MethodDeclNode(string name)
-	{
-		methodName = name;
+	MethodDeclNode(string name);
 
-		block = NULL;
-	}
-
-	virtual string ToString()
-	{
-		string retorno = "def " + methodName + " (";
-
-		if (methodArguments.size() > 0) {
-
-			for (int x = 0; x < methodArguments.size(); x++)
-			{
-				retorno += methodArguments[x];
-				if (x != methodArguments.size() - 1)
-					retorno += ", ";
-			}
-		}
-		
-		retorno += "):\n";
-		retorno += block->ToString();
-
-		return retorno;
-	}
+	string ToString();
 };
 
 class ProgramNode : public ASTNode
@@ -945,27 +440,100 @@ public:
 	vector<FieldDeclNode *> field_decl_list;
 	vector<MethodDeclNode *> method_decl_list;
 
-	ProgramNode(string nombre)
-	{
-		name = nombre;
-	}
+	ProgramNode(string nombre);
 
-	virtual string ToString()
-	{
-		string retorno = "class " + name +  " :\n";
-		
-		for (int x = 0; x < field_decl_list.size(); x++)
-		{
-			retorno += field_decl_list[x]->ToString() + "\n";
-		}
-
-		for (int x = 0; x < method_decl_list.size(); x++)
-		{
-			retorno += method_decl_list[x]->ToString() + "\n";
-		}
-
-		return retorno;
-	}
+	string ToString();
 };
 
+#pragma endregion 
+
+#pragma region Tipos
+
+enum Types
+{
+	entero,
+	booleano,
+	charconstant,
+	Void,
+	arreglo,
+	funcion
+};
+
+class Tipo
+{
+public:
+	virtual int getTipo();
+
+	virtual bool esEquivalente(Tipo *t);
+
+	exception TypeError(string descripcion);
+};
+
+class Entero : public Tipo
+{
+public:
+	int getTipo();
+
+	bool EsEquivalente(Tipo *t);
+};
+
+class Booleano : public Tipo
+{
+public:
+	int getTipo();
+
+	bool EsEquivalente(Tipo *t);
+};
+
+class CharConstant : public Tipo
+{
+public:
+	int getTipo();
+
+	bool EsEquivalente(Tipo *t);
+};
+
+class Void : public Tipo
+{
+public:
+	int getTipo();
+
+	bool EsEquivalente(Tipo *t);
+};
+
+class Arreglo : public Tipo
+{
+public:
+	int tamaño;
+	Tipo *arraytype;
+	virtual int getTipo();
+	virtual bool EsEquivalente(Tipo *t);
+};
+
+class Funcion : public Tipo
+{
+public:
+
+	map<string,Tipo*> Parametros;
+	Tipo *retorno;
+	virtual int getTipo();
+	virtual bool EsEquivalente(Tipo *t);
+};
+
+
 #pragma endregion
+
+#pragma region EntornoTipos
+class EntornoTipos
+{
+public:
+	map<string, Tipo*> tablaSimbolosEntorno;
+	EntornoTipos* entornoAnterior;
+
+	EntornoTipos(EntornoTipos* anterior);
+	void Put(string key,Tipo *type);
+	Tipo *get(string key);
+};
+#pragma endregion
+
+#endif

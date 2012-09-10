@@ -12,7 +12,11 @@
 
 using namespace std;
 
+extern EntornoTipos* environment;
+extern MethodDeclNode* funcionActual;
 extern int fila;
+extern IterationStatement* cicloActual;
+
 class Parser
 {
 public:
@@ -198,6 +202,8 @@ public:
 				token = lex->NextToken();
 				if(token.getTipo() == TokenType::ID)
 				{
+					environment = new EntornoTipos(NULL);
+					
 					ProgramNode *prgm = new ProgramNode(token.lexema);
 
 					token = lex->NextToken();
@@ -224,7 +230,7 @@ public:
 						{
 							token = lex->NextToken();
 						}
-
+						environment = NULL;
 						return prgm;
 					}else
 					{
@@ -268,6 +274,7 @@ public:
 				MethodDeclNode *mtd = new MethodDeclNode(token.lexema);
 				token = lex->NextToken();
 
+				funcionActual = mtd;
 				if(token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ)
 				{
 					token = lex->NextToken();
@@ -304,6 +311,7 @@ public:
 				{
 					token = lex->NextToken();
 					mtd->block = dynamic_cast<BlockStatement *> (block());
+					funcionActual=NULL;
 
 					return mtd;
 				} else {
@@ -322,8 +330,10 @@ public:
 		{
 			InicioBloque();
 
+			EntornoTipos* savedEnv  = environment;
+			environment = new EntornoTipos(environment);
 			BlockStatement *blck = new BlockStatement();
-
+		
 			while(isStatement())
 			{
 				Statement *stmnt = statement();
@@ -331,6 +341,7 @@ public:
 			}
 				
 			FinBloque();
+			environment = savedEnv;
 
 			return blck;
 			
@@ -424,9 +435,16 @@ public:
 				if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 				{
 					token = lex->NextToken();
+					WhileStatement* whiles = new WhileStatement(NULL, NULL);
+					cicloActual = whiles;
+
 					BlockStatement *blck = dynamic_cast<BlockStatement *> (block());
 
-					return new WhileStatement(cond, blck);
+					whiles->block = blck;
+					whiles->condition = cond;
+					cicloActual =  NULL;
+					
+					return whiles;
 				}else 
 				{
 					throw PythonError("Statement->While","Se Esperaba : Luego de Expr");
@@ -452,8 +470,9 @@ public:
 						if(token.getTipo() == TokenType::SIGN_DOSPUNTOS)
 						{
 							token = lex->NextToken();
+							cicloActual = for_stmnt;
 							for_stmnt->block = dynamic_cast<BlockStatement*>(block());
-
+							cicloActual = NULL;
 							return for_stmnt;
 						}else
 						{ 

@@ -8,8 +8,10 @@
 
 using namespace std;
 
+EntornoTipos* environment = NULL;
+MethodDeclNode* funcionActual = NULL;
 int fila = -1;
-
+IterationStatement* cicloActual = NULL;
 int main()
 {
 
@@ -20,7 +22,9 @@ int main()
 		while(par.token.getTipo() != TokenType::EOFF)
 		{
 			ASTNode *prgm = par.program();
-			cout << endl << endl << prgm->ToString() << endl << endl ; 
+			ProgramNode* programnode = dynamic_cast<ProgramNode*>(prgm);
+			programnode->validarSemantica();
+			//cout << endl << endl << prgm->ToString() << endl << endl ; 
 		}
 
 		if(par.token.getTipo() == TokenType::EOFF)

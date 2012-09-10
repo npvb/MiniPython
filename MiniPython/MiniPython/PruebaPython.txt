@@ -1,49 +1,12 @@
-class pruebaMiniPython:
-	a = 2
-	b = x + b
-
-	def pruebaSinParametros:
-		print 3
-		print b(),true,false
-		print 2+1
-		read v
-		read arreglo[x]
-		void()
-
-		while hola>=3:
-			x = 3+2
-		return x
-
-		for l in 0 ... x-1:
-			if b == 0:
-				return a
-			else:
-				return gcd (b, a % b)
-
-		for l in 0 ... x-1:
-			for l in 0 ... x-1:
-				if b == 0:
-					return a
-				else:
-					return gcd (b, a % b)
+class GreatestCommonDivisor:
+	a = 10
+	b = 20
 
 	def gcd (a, b):
-		if b == 0:
-			return a
-		else:
-			return gcd (b, a % b)
+		a = b + 10
+		return a
 
-	def main: 
-		while (5 > 76 and 76 == y):
-			return x
-		if (true):
-			if(false):
-				y = y + x
-				while (5>67 == y):
-					return algo
-			elif (89+3-3):
-				y = 5
-			else:
-				print x
-		else:
-			print "n"
+	def main:
+		x = 12
+		y = 1
+		gcd (x , y)

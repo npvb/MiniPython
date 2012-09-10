@@ -27,12 +27,21 @@ public:
 class EntornoTipos;
 
  #pragma region Expresiones
+enum ExprType
+{
+	opBin,
+	opUn,
+	constant,
+	lValue
+};
+
 class Expr: public ASTNode
 {
 public:
 	Expr();
 	virtual Tipo* validarSemantica();
 	EntornoTipos* actTypeEnvironment;
+	virtual int getTipoExpr();
 };
 
  #pragma region OpBinario
@@ -44,6 +53,7 @@ public:
 	Expr *expr_der;
 
 	OpBinExpr(Expr *e1, Expr *e2);
+	int getTipoExpr();
 };
 
 class MayorExpr : public OpBinExpr
@@ -166,6 +176,7 @@ class ShiftLeftExpr : public OpBinExpr
 public:
 	ShiftLeftExpr(Expr *e1, Expr *e2);
 	string ToString();
+	Tipo *validarSemantica();
 };
 
 class ShiftRightExpr : public OpBinExpr
@@ -173,6 +184,7 @@ class ShiftRightExpr : public OpBinExpr
 public:
 	ShiftRightExpr(Expr *e1, Expr *e2);
 	string ToString();
+	Tipo *validarSemantica();
 };
 #pragma endregion
 
@@ -181,8 +193,8 @@ class UnaryExpr : public Expr
 {
 public:
 	Expr *expresion;
-
 	UnaryExpr(Expr *e);	
+	int getTipoExpr();
 };
 
 class NegateExpr : public UnaryExpr
@@ -191,6 +203,7 @@ public:
 	NegateExpr(Expr *e);
 
 	string ToString();
+	Tipo *validarSemantica();
 };
 
 class InvertExpr : public UnaryExpr
@@ -199,6 +212,7 @@ public:
 	InvertExpr(Expr *e);
 
 	string ToString();
+	Tipo* validarSemantica();
 };
 
 #pragma endregion
@@ -206,6 +220,7 @@ public:
  #pragma region Constant
 class ConstantExpr : public Expr
 {
+	int getTipoExpr();
 };
 
 class NumExpr : public ConstantExpr
@@ -213,6 +228,8 @@ class NumExpr : public ConstantExpr
 public:
 
 	string ToString();
+	Tipo* validarSemantica();
+
 };
 
 class CharExpr : public ConstantExpr
@@ -220,6 +237,7 @@ class CharExpr : public ConstantExpr
 public:
 
 	string ToString();
+	Tipo* validarSemantica();
 };
 
 class BooleanExpr : public ConstantExpr
@@ -227,6 +245,7 @@ class BooleanExpr : public ConstantExpr
 public:
 
 	string ToString();
+	Tipo* validarSemantica();
 };
 #pragma endregion
 
@@ -236,7 +255,8 @@ class LValueExpr : public Expr
 public:
 	string varname;
 
-	LValueExpr(string nombre);	
+	LValueExpr(string nombre);
+	int getTipoExpr();
 };
 
 class IDExpr : public LValueExpr
@@ -245,6 +265,7 @@ public:
 	IDExpr(string nom);
 
 	string ToString();
+	Tipo* validarSemantica();
 };
 
 class ArrayExpr : public LValueExpr
@@ -254,6 +275,7 @@ public:
 	ArrayExpr(string nom,Expr *idx);
 
 	string ToString();
+	Tipo* validarSemantica();
 };
 
 class MethodCallExpr : public Expr
@@ -273,16 +295,25 @@ public:
 
  #pragma region Statements
 
+class MethodDeclNode;
+
 class Statement : public ASTNode
 {
+public:
+	MethodDeclNode* enclosingMethod;
+	Statement();
+	virtual void validarSemantica()=0;
 };
 
 class BlockStatement : public Statement
 {
 public:
 	vector<Statement *> statements;
-
+	EntornoTipos* entornoTipoActual;
+	BlockStatement();
 	string ToString();
+	void validarSemantica();
+
 };
 
 class AssignStatement : public Statement
@@ -294,6 +325,7 @@ public:
 	AssignStatement(Expr *lvalue, Expr *rvalue);
 
 	string ToString();
+	void validarSemantica();
 };
 
 class MethodCallStatement : public Statement
@@ -304,6 +336,7 @@ public:
 	MethodCallStatement(MethodCallExpr *mtc);
 
 	string ToString();
+	void validarSemantica();
 };
 
 class ElseIfBlockStatement : public Statement
@@ -315,6 +348,7 @@ public:
 	ElseIfBlockStatement(Expr *cond, BlockStatement *blck);
 
 	string ToString();
+	void validarSemantica();
 };
 
 class IfStatement : public Statement
@@ -328,6 +362,7 @@ public:
 	IfStatement(Expr *cond, BlockStatement *ifBlck);
 
 	string ToString();
+	void validarSemantica();
 };
 
 
@@ -346,6 +381,7 @@ public:
 	WhileStatement(Expr *cond, BlockStatement *blck);
 
 	string ToString();
+	void validarSemantica();
 };
 
 class ForStatement : public IterationStatement
@@ -359,6 +395,7 @@ public:
 	ForStatement(string vName);
 
 	string ToString();
+	void validarSemantica();
 };
 
 #pragma endregion
@@ -367,26 +404,28 @@ class ReturnStatement : public Statement
 {
 public:
 	Expr *expr;
-
 	ReturnStatement(Expr *e);
-
+	
 	string ToString();
+	void validarSemantica();
 };
 
 class BreakStatement : public Statement
 {
 public:
 	BreakStatement();
-
+	IterationStatement* enclosingCycle;
 	string ToString();
+	void validarSemantica();
 };
 
 class ContinueStatement : public Statement
 {
 public:
 	ContinueStatement();
-
+	IterationStatement* enclosingCycle;
 	string ToString();
+	void validarSemantica();
 };
 
 class ReadStatement : public Statement
@@ -397,6 +436,7 @@ public:
 	ReadStatement(Expr *val);
 
 	string ToString();
+	void validarSemantica();
 };
 
 class PrintStatement : public Statement
@@ -405,40 +445,50 @@ public:
 	vector<Expr *> printlist;
 
 	string ToString();
+	void validarSemantica();
 };
 
 #pragma endregion
 
  #pragma region Program
+class Sentence: public ASTNode
+{
+public:
+	EntornoTipos* entornoTiposActual;
+	Sentence();
+	virtual void validarSemantica()=0;
+};
 
-class FieldDeclNode : public ASTNode
+class FieldDeclNode : public Sentence
 {
 public:
 	AssignStatement *decl_stmnt;
 
 	FieldDeclNode(AssignStatement *decl);
-
+	void validarSemantica();
 	string ToString();
 };
 
-class MethodDeclNode : public ASTNode
+class MethodDeclNode : public Sentence
 {
 public:
 	string methodName;
 	vector<string> methodArguments;
 	BlockStatement *block;
+	void validarSemantica();
 
 	MethodDeclNode(string name);
 
 	string ToString();
 };
 
-class ProgramNode : public ASTNode
+class ProgramNode : public Sentence
 {
 public:
 	string name;
 	vector<FieldDeclNode *> field_decl_list;
 	vector<MethodDeclNode *> method_decl_list;
+	void validarSemantica();
 
 	ProgramNode(string nombre);
 
@@ -451,6 +501,7 @@ public:
 
 enum Types
 {
+	generico,
 	entero,
 	booleano,
 	charconstant,
@@ -464,9 +515,17 @@ class Tipo
 public:
 	virtual int getTipo();
 
-	virtual bool esEquivalente(Tipo *t);
+	virtual bool EsEquivalente(Tipo *t);
 
 	exception TypeError(string descripcion);
+};
+
+class Generico : public Tipo
+{
+public:
+	int getTipo();
+
+	bool EsEquivalente(Tipo *t);
 };
 
 class Entero : public Tipo
@@ -493,7 +552,7 @@ public:
 	bool EsEquivalente(Tipo *t);
 };
 
-class Void : public Tipo
+class VoidF : public Tipo
 {
 public:
 	int getTipo();
@@ -506,8 +565,8 @@ class Arreglo : public Tipo
 public:
 	int tamaño;
 	Tipo *arraytype;
-	virtual int getTipo();
-	virtual bool EsEquivalente(Tipo *t);
+	int getTipo();
+	bool EsEquivalente(Tipo *t);
 };
 
 class Funcion : public Tipo
@@ -516,8 +575,8 @@ public:
 
 	map<string,Tipo*> Parametros;
 	Tipo *retorno;
-	virtual int getTipo();
-	virtual bool EsEquivalente(Tipo *t);
+	int getTipo();
+	bool EsEquivalente(Tipo *t);
 };
 
 
@@ -532,7 +591,9 @@ public:
 
 	EntornoTipos(EntornoTipos* anterior);
 	void Put(string key,Tipo *type);
+	void Set(string key,Tipo *type);
 	Tipo *get(string key);
+	bool Exists(string key); 
 };
 #pragma endregion
 

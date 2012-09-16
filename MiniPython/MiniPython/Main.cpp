@@ -8,10 +8,11 @@
 
 using namespace std;
 
-EntornoTipos* environment = NULL;
+EntornoTipos* entornoTiposActual = NULL;
 MethodDeclNode* funcionActual = NULL;
 int fila = -1;
 IterationStatement* cicloActual = NULL;
+
 int main()
 {
 

@@ -10,7 +10,7 @@
 using namespace std;
 
 extern int fila;
-extern EntornoTipos* environment;
+extern EntornoTipos* entornoTiposActual;
 extern MethodDeclNode* funcionActual;
 extern IterationStatement* cicloActual;
 
@@ -32,9 +32,11 @@ exception ASTNode::ASTError(string nombre_funcion,string descripcion)
 
 #pragma region Expresiones
 
+#pragma region Expr
+
 Expr::Expr()
 {
-	actTypeEnvironment = environment;
+	actualTypeEnvironment = entornoTiposActual;
 }
 
 Tipo* Expr::validarSemantica() 
@@ -44,10 +46,14 @@ Tipo* Expr::validarSemantica()
 
 int Expr::getTipoExpr()
 {
-	return -1;
+	throw ASTError("validarSemantica","Error Semantica");
 }
 
- #pragma region OpBinario
+#pragma endregion
+
+#pragma region OpBinario
+
+#pragma region OpBinExpr
 
 OpBinExpr::OpBinExpr(Expr *e1, Expr *e2)
 {
@@ -60,14 +66,16 @@ int OpBinExpr::getTipoExpr()
 	return ExprType::opBin;
 }
 
+#pragma endregion
+
+#pragma region MayorExpr
+
 MayorExpr::MayorExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 	
 string MayorExpr::ToString()
 {
 	return expr_izq->ToString() + " > " + expr_der->ToString();
 }
-
-
 
 Tipo* MayorExpr:: validarSemantica()
 {
@@ -77,13 +85,38 @@ Tipo* MayorExpr:: validarSemantica()
 	if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
 	{
 		return new Booleano();
-	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
+	}
+	else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("MayorExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("MayorExpr","Imposible inferir tipo para expresion generica.");
+		}
+
 		return new Booleano();
 	}else
-		throw ASTError("MayorExpr","Tipos de la Expresion MAYOR (>) deben ser: booleano, flotante o caracter");
+		throw ASTError("MayorExpr","Tipos de la Expresion MAYOR (>) deben ser: entero.");
 }
 
+#pragma endregion
+
+#pragma region MenorExpr
 
 MenorExpr::MenorExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -102,10 +135,35 @@ Tipo* MenorExpr::validarSemantica()
 		return new Booleano();
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("MenorExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("MenorExpr","Imposible inferir tipo para expresion generica.");
+		}
+
 		return new Booleano();
 	}else
-		throw ASTError("MenorExpr","Tipos de la Expresion MENOR (<) deben ser: booleano, flotante o caracter");
+		throw ASTError("MenorExpr","Tipos de la Expresion MENOR (<) deben ser: entero.");
 }
+
+#pragma endregion
+
+#pragma region MayorIgualExpr
 
 MayorIgualExpr::MayorIgualExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -124,11 +182,34 @@ Tipo* MayorIgualExpr::validarSemantica()
 		return new Booleano();
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("MayorIgualExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("MayorIgualExpr","Imposible inferir tipo para expresion generica.");
+		}
 		return new Booleano();
 	}else
-		throw ASTError("MayorIgualExpr","Tipos de la Expresion MAYOR IGUAL (>=) deben ser: booleano, flotante o caracter");
+		throw ASTError("MayorIgualExpr","Tipos de la Expresion MAYOR IGUAL (>=) deben ser: entero.");
 }
 
+#pragma endregion
+
+#pragma region MenorIgualExpr
 
 MenorIgualExpr::MenorIgualExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -147,11 +228,35 @@ Tipo* MenorIgualExpr::validarSemantica()
 		return new Booleano();
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("MenorIgualExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("MenorIgualExpr","Imposible inferir tipo para expresion generica.");
+		}
+
 		return new Booleano();
 	}else
-		throw ASTError("MenorExpr","Tipos de la Expresion MENOR (<) deben ser: booleano, flotante o caracter");
+		throw ASTError("MenorIgualExpr","Tipos de la Expresion MENOR (<) deben ser: entero.");
 }
 
+#pragma endregion
+
+#pragma region DistintoExpr
 
 DistintoExpr::DistintoExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -170,11 +275,34 @@ Tipo* DistintoExpr::validarSemantica()
 		return new Booleano();
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("DistintoExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("DistintoExpr","Imposible inferir tipo para expresion generica.");
+		}
 		return new Booleano();
 	}else
-		throw ASTError("DistintoExpr","Tipos de la Expresion -DISTINTO DE (!=) deben ser: booleano, flotante o caracter");
+		throw ASTError("DistintoExpr","Tipos de la Expresion -DISTINTO DE (!=) deben ser: entero.");
 }
 
+#pragma endregion
+
+#pragma region IgualExpr
 
 IgualExpr::IgualExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 	
@@ -193,11 +321,35 @@ Tipo* IgualExpr::validarSemantica()
 		return new Booleano();
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("IgualExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("IgualExpr","Imposible inferir tipo para expresion generica.");
+		}
+
 		return new Booleano();
 	}else
-		throw ASTError("IgualExpr","Tipos de la Expresion IGUAL (=) deben ser: booleano, flotante o caracter");
+		throw ASTError("IgualExpr","Tipos de la Expresion IGUAL (=) deben ser: entero.");
 }
 
+#pragma endregion
+
+#pragma region ModExpr
 
 ModExpr::ModExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -213,14 +365,38 @@ Tipo* ModExpr::validarSemantica()
 		
 	if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
 	{
-		return new Booleano();
+		return t_der;
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
-		return new Booleano();
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("ModExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("ModExpr","Imposible inferir tipo para expresion generica.");
+		}
+
+		return new Entero();
 	}else
-		throw ASTError("ModExpr","Tipos de la Expresion MAYOR deben ser: booleano, flotante o caracter");
+		throw ASTError("ModExpr","Tipos de la Expresion MOD deben ser: entero.");
 }
 
+#pragma endregion
+
+#pragma region AndExpr
 
 AndExpr::AndExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -234,18 +410,44 @@ Tipo* AndExpr::validarSemantica()
 	Tipo *t_izq = expr_izq->validarSemantica();
 	Tipo *t_der = expr_der->validarSemantica();
 		
-	if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
+	/*if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
 	{
 		return new Booleano();
-	}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
+	}else */
+	if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
 	{
-		return new Booleano();
+		return t_der;
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Booleano());
+			} else
+				throw ASTError("AndExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Booleano());
+			} else
+				throw ASTError("AndExpr","Imposible inferir tipo para expresion generica.");
+		}
+
 		return new Booleano();
 	}else
-		throw ASTError("AndExpr","Tipos de la Expresion AND deben ser: booleano, flotante o caracter");
+		throw ASTError("AndExpr","Tipos de la Expresion AND deben ser: booleano.");
 }
+
+#pragma endregion
+
+#pragma region OrExpr
 
 OrExpr::OrExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -259,19 +461,44 @@ Tipo* OrExpr::validarSemantica()
 	Tipo *t_izq = expr_izq->validarSemantica();
 	Tipo *t_der = expr_der->validarSemantica();
 		
-	if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
+	/*if(t_izq->getTipo() == Types::entero && t_der->getTipo() == Types::entero)
 	{
 		return new Booleano();
-	}else if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
+	}else */
+	if(t_izq->getTipo() == Types::booleano && t_der->getTipo() == Types::booleano)
 	{
-		return new Booleano();
+		return t_der;
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Booleano());
+			} else
+				throw ASTError("OrExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Booleano());
+			} else
+				throw ASTError("OrExpr","Imposible inferir tipo para expresion generica.");
+		}
+
 		return new Booleano();
 	}else
-		throw ASTError("OrExpr","Tipos de la Expresion OR deben ser: booleano, flotante o caracter");
+		throw ASTError("OrExpr","Tipos de la Expresion OR deben ser: booleano.");
 }
 
+#pragma endregion
+
+#pragma region SumaExpr
 
 SumaExpr::SumaExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -290,11 +517,36 @@ Tipo* SumaExpr::validarSemantica()
 		return t_der;
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("SumaExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("SumaExpr","Imposible inferir tipo para expresion generica.");
+		}
+
 		return new Entero();
 	}else
-		throw ASTError("SumaExpr","Tipos Invalidos");
+		throw ASTError("SumaExpr","Tipos de la Expresion SUMA deben ser: entero.");
 
 }
+
+#pragma endregion
+
+#pragma region RestaExpr
 
 RestaExpr::RestaExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -313,11 +565,35 @@ Tipo* RestaExpr::validarSemantica()
 		return t_der;
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
-		return new Booleano();
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("RestaExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("RestaExpr","Imposible inferir tipo para expresion generica.");
+		}
+
+		return new Entero();
 	}else
-		throw ASTError("RestaExpr","Tipos Invalidos");
+		throw ASTError("RestaExpr","Tipos de la Expresion RESTA deben ser: entero.");
 }
 
+#pragma endregion
+
+#pragma region DivisionExpr
 
 DivisionExpr::DivisionExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -333,15 +609,38 @@ Tipo* DivisionExpr::validarSemantica()
 
 	if (t_izq->getTipo()==Types::entero && t_der->getTipo()==Types::entero)
 	{
-		return t_der;
+		return new Entero();
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("DivisionExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("DivisionExpr","Imposible inferir tipo para expresion generica.");
+		}
+
 		return new Entero();
 	}else
-		throw ASTError("DivisionExpr","Tipos Invalidos");
+		throw ASTError("DivisionExpr","Tipos de la Expresion DIVISION deben ser: entero.");
 }
 
+#pragma endregion
 
+#pragma region MultiplicacionExpr
 
 MultiplicacionExpr::MultiplicacionExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -360,11 +659,35 @@ Tipo* MultiplicacionExpr::validarSemantica()
 		return t_der;
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("MultiplicacionExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("MultiplicacionExpr","Imposible inferir tipo para expresion generica.");
+		}
+
 		return new Entero();
 	}else
-		throw ASTError("MultiplicacionExpr","Tipos Invalidos");
+		throw ASTError("MultiplicacionExpr","Tipos de la Expresion MULTIPLICACION deben ser: entero.");
 }
 
+#pragma endregion
+
+#pragma region ShiftLeftExpr
 
 ShiftLeftExpr::ShiftLeftExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -383,11 +706,35 @@ Tipo* ShiftLeftExpr::validarSemantica()
 		return t_der;
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("ShiftLeftExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("ShiftLeftExpr","Imposible inferir tipo para expresion generica.");
+		}
+
 		return new Entero();
 	}else
-		throw ASTError("ShiftLeftExpr","Tipos Invalidos");
+		throw ASTError("ShiftLeftExpr","Tipos de la Expresion SHIFTLEFT deben ser: entero.");
 }
 
+#pragma endregion
+
+#pragma region ShiftRightExpr
 
 ShiftRightExpr::ShiftRightExpr(Expr *e1, Expr *e2):OpBinExpr(e1,e2){}
 
@@ -406,13 +753,39 @@ Tipo* ShiftRightExpr::validarSemantica()
 		return t_der;
 	}else if(t_izq->getTipo() == Types::generico || t_der->getTipo() == Types::generico)
 	{
+		if (t_izq->getTipo() == Types::generico)
+		{
+			if (expr_izq->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_izq = dynamic_cast<LValueExpr *>(expr_izq);
+
+				lv_izq->SetTipo(new Entero());
+			} else
+				throw ASTError("ShiftRightExpr","Imposible inferir tipo para expresion generica.");
+		}
+		else if (t_der->getTipo() == Types::generico)
+		{
+			if (expr_der->getTipoExpr() == ExprType::lValue)
+			{
+				LValueExpr *lv_der = dynamic_cast<LValueExpr *>(expr_der);
+
+				lv_der->SetTipo(new Entero());
+			} else
+				throw ASTError("ShiftRightExpr","Imposible inferir tipo para expresion generica.");
+		}
+
 		return new Entero();
 	}else
-		throw ASTError("ShiftRightExpr","Tipos Invalidos");
+		throw ASTError("ShiftRightExpr","Tipos de la Expresion SHIFTRIGHT deben ser: entero.");
 }
+
 #pragma endregion
 
- #pragma region UnaryOp
+#pragma endregion
+
+#pragma region UnaryOp
+
+#pragma region UnaryExpr
 
 UnaryExpr::UnaryExpr(Expr *e)
 {
@@ -423,6 +796,10 @@ int UnaryExpr::getTipoExpr()
 {
 	return ExprType::opUn;
 }
+
+#pragma endregion
+
+#pragma region NegateExpr
 
 NegateExpr::NegateExpr(Expr *e):UnaryExpr(e){}
 
@@ -439,10 +816,22 @@ Tipo* NegateExpr::validarSemantica()
 	{
 		return t;
 	}else if(t->getTipo() == Types::generico){
+		if (expresion->getTipoExpr() == ExprType::lValue)
+		{
+			LValueExpr *lv = dynamic_cast<LValueExpr *>(expresion);
+
+			lv->SetTipo(new Entero());
+		} else
+			throw ASTError("NegateExpr","Imposible inferir tipo para expresion generica.");
+
 		return new Entero();
 	}else
-		throw ASTError("NegateExpr","Tipo Invalido");
+		throw ASTError("NegateExpr","Tipos de la Expresion NEGATE (-) deben ser: entero.");
 }
+
+#pragma endregion
+
+#pragma region InvertExpr
 
 InvertExpr::InvertExpr(Expr *e):UnaryExpr(e){}
 
@@ -459,14 +848,25 @@ Tipo* InvertExpr::validarSemantica()
 	{
 		return t;
 	}else if(t->getTipo() == Types::generico){
+		if (expresion->getTipoExpr() == ExprType::lValue)
+		{
+			LValueExpr *lv = dynamic_cast<LValueExpr *>(expresion);
+
+			lv->SetTipo(new Entero());
+		} else
+			throw ASTError("InvertExpr","Imposible inferir tipo para expresion generica.");
+
 		return new Entero();
 	}else
-		throw ASTError("InvertExpr","Tipo Invalido");
+		throw ASTError("InvertExpr","Tipos de la Expresion INVERT (~) deben ser: entero.");
 }
 
 #pragma endregion
 
- #pragma region Constant
+#pragma endregion
+
+#pragma region Constant
+
 int ConstantExpr::getTipoExpr()
 {
 	return ExprType::constant;
@@ -502,19 +902,28 @@ Tipo* BooleanExpr::validarSemantica()
 {
 	return new Booleano();
 }
+
 #pragma endregion
 
- #pragma region LValueExpr
+#pragma region LValue
+
+#pragma region LValueExpr
 
 LValueExpr::LValueExpr(string nombre)
 {
 	varname = nombre;
+
+	enclosingMethod = funcionActual;
 }
 
 int LValueExpr::getTipoExpr()
 {
 	return ExprType::lValue;
 }
+
+#pragma endregion
+
+#pragma region IDExpr
 
 IDExpr::IDExpr(string nom):LValueExpr(nom){}
 
@@ -525,9 +934,37 @@ string IDExpr::ToString()
 
 Tipo* IDExpr::validarSemantica()
 {
-	Tipo* t = this->actTypeEnvironment->get(varname);
+	Tipo* t = this->actualTypeEnvironment->get(varname);
 	return t;
 }
+
+void IDExpr::SetTipo(Tipo *t)
+{
+	if (this->enclosingMethod != NULL)
+	{
+		Tipo *t_func = this->actualTypeEnvironment->get(this->enclosingMethod->methodName);
+
+		Funcion *func = dynamic_cast<Funcion *>(t_func);
+	
+		if (func->Parametros.count(varname) > 0)
+		{
+			func->Parametros[varname] = t;
+		}
+	}
+
+	if (this->actualTypeEnvironment->Exists(varname))
+	{
+		this->actualTypeEnvironment->Set(varname, t);
+	}
+	else
+	{
+		this->actualTypeEnvironment->Put(varname, t);
+	}
+}
+
+#pragma endregion
+
+#pragma region ArrayExpr
 
 ArrayExpr::ArrayExpr(string nom,Expr *idx):LValueExpr(nom)
 {
@@ -536,7 +973,7 @@ ArrayExpr::ArrayExpr(string nom,Expr *idx):LValueExpr(nom)
 
 Tipo* ArrayExpr::validarSemantica()
 {
-	Tipo* t = this->actTypeEnvironment->get(varname);
+	Tipo* t = this->actualTypeEnvironment->get(varname);
 	
 	if(t->getTipo()==Types::arreglo)
 	{
@@ -556,6 +993,24 @@ string ArrayExpr::ToString()
 	return " "+varname+" ["+index->ToString()+"] ";
 }
 
+void ArrayExpr::SetTipo(Tipo *t)
+{
+	Tipo* tl = this->actualTypeEnvironment->get(varname);
+	
+	if(tl->getTipo()==Types::arreglo)
+	{
+		Arreglo* arr = dynamic_cast<Arreglo*>(tl);
+
+		arr->arraytype = t;
+	}else
+		throw ASTError("ArrayExpr",varname+" no es de Tipo Arreglo");
+}
+
+#pragma endregion
+
+#pragma endregion
+
+#pragma region MethodCallExpr
 
 MethodCallExpr::MethodCallExpr(string nombre_func)
 {
@@ -590,7 +1045,8 @@ string MethodCallExpr::ToString()
 
 Tipo* MethodCallExpr::validarSemantica()
 {
-	Tipo *t = this->actTypeEnvironment->get(nombre_funcion);
+	Tipo *t = this->actualTypeEnvironment->get(nombre_funcion);
+
 	if(t->getTipo() == Types::funcion)
 	{
 		Funcion* f1 = dynamic_cast<Funcion*>(t);
@@ -621,6 +1077,7 @@ Tipo* MethodCallExpr::validarSemantica()
 			throw ASTError("MethodCallExpr::validarSemantica","Cantidad Erronea de Parametros");
 	}
 }
+
 #pragma endregion
 
 #pragma endregion
@@ -640,7 +1097,7 @@ Statement::Statement()
 
 BlockStatement::BlockStatement()
 {
-	entornoTipoActual = environment;
+	actualTypeEnvironment = entornoTiposActual;
 }
 
 string BlockStatement::ToString()
@@ -684,10 +1141,15 @@ void AssignStatement::validarSemantica()
 	{
 		LValueExpr* lv = dynamic_cast<LValueExpr*>(leftValue);
 
-		if(lv->actTypeEnvironment->Exists(lv->varname))
+		if(lv->actualTypeEnvironment->Exists(lv->varname))
 		{
-			Tipo* t_izq = lv->actTypeEnvironment->get(lv->varname);
+			Tipo* t_izq = lv->actualTypeEnvironment->get(lv->varname);
 			Tipo* t_der = rightValue->validarSemantica();
+
+			if (t_izq->getTipo() == Types::generico)
+			{
+				lv->SetTipo(t_der);
+			}
 
 			if(!(t_izq->EsEquivalente(t_der)))
 			{
@@ -695,7 +1157,7 @@ void AssignStatement::validarSemantica()
 			}
 		}else{
 			Tipo* t_der = rightValue->validarSemantica();
-			lv->actTypeEnvironment->Put(lv->varname,t_der);
+			lv->SetTipo(t_der);
 		}	
 	}else
 		throw ASTError("AssignStatement","El Lado Izquierdo debe ser Un arreglo o una variable");
@@ -755,7 +1217,17 @@ void ElseIfBlockStatement::validarSemantica()
 	if(t_cond->EsEquivalente(new Booleano()))
 	{
 		block->validarSemantica();
-	}else
+	} else if (t_cond->getTipo() == Types::generico)
+	{
+		if (condition->getTipoExpr() == ExprType::lValue)
+		{
+			LValueExpr *lv = dynamic_cast<LValueExpr *>(condition);
+
+			lv->SetTipo(new Booleano());
+		} else
+			throw ASTError("ElseIfBlockStatement","Imposible inferir tipo para expresion generica.");
+	}
+	else
 		throw ASTError("ElseIfBlockStatement","La condicion del elif debe ser de tipo Booleano");
 }
 
@@ -808,7 +1280,17 @@ void IfStatement::validarSemantica()
 		{
 			elseBlock->validarSemantica();
 		}
-	}else
+	}else if (t_cond->getTipo() == Types::generico)
+	{
+		if (condition->getTipoExpr() == ExprType::lValue)
+		{
+			LValueExpr *lv = dynamic_cast<LValueExpr *>(condition);
+
+			lv->SetTipo(new Booleano());
+		} else
+			throw ASTError("IfStatement","Imposible inferir tipo para expresion generica.");
+	}
+	else
 		throw ASTError("IfStatement","La condicion del if debe ser de tipo Booleano");
 }
 
@@ -838,6 +1320,16 @@ void WhileStatement::validarSemantica()
 	if(t_cond->EsEquivalente(new Booleano()))
 	{
 		block->validarSemantica();
+	}
+	else if (t_cond->getTipo() == Types::generico)
+	{
+		if (condition->getTipoExpr() == ExprType::lValue)
+		{
+			LValueExpr *lv = dynamic_cast<LValueExpr *>(condition);
+
+			lv->SetTipo(new Booleano());
+		} else
+			throw ASTError("WhileStatement","Imposible inferir tipo para expresion generica.");
 	}else
 		throw ASTError("WhileStatement","La condicion del while debe ser de tipo Booleano");
 }
@@ -864,13 +1356,17 @@ string ForStatement::ToString()
 
 void ForStatement::validarSemantica()
 {
-	if(block->entornoTipoActual->Exists(varname))
+	if(block->actualTypeEnvironment->Exists(varname))
 	{
-		Tipo* t = block->entornoTipoActual->get(varname);
+		Tipo* t = block->actualTypeEnvironment->get(varname);
 		
 		if(!t->EsEquivalente(new Entero()))
 		{
-			throw ASTError("ForStatement","El Tipo de la Variable "+varname+" del For debe ser Entera");
+			if (t->getTipo() == Types::generico)
+			{
+				block->actualTypeEnvironment->Set(varname, new Entero());
+			} else
+				throw ASTError("ForStatement","El Tipo de la Variable "+varname+" del For debe ser Entera");
 		}
 
 		Tipo *rango_init = exprInicial->validarSemantica();
@@ -878,10 +1374,31 @@ void ForStatement::validarSemantica()
 
 		if(!(rango_init->EsEquivalente(new Entero()) && rango_end->EsEquivalente(new Entero)))
 		{
-			throw ASTError("ForStatement","El Tipo del Rango Inicial y el Rango Final deben ser Enteros");
+			if (rango_init->getTipo() == Types::generico)
+			{
+				if (exprInicial->getTipoExpr() == ExprType::lValue)
+				{
+					LValueExpr *lv = dynamic_cast<LValueExpr *>(exprInicial);
+
+					lv->SetTipo(new Entero());
+				} else
+					throw ASTError("ForStatement","Imposible inferir tipo para expresion de rango inicial generica.");
+			}
+			else if (rango_end->getTipo() == Types::generico)
+			{
+				if (exprFinal->getTipoExpr() == ExprType::lValue)
+				{
+					LValueExpr *lv = dynamic_cast<LValueExpr *>(exprFinal);
+
+					lv->SetTipo(new Entero());
+				} else
+					throw ASTError("ForStatement","Imposible inferir tipo para expresion de rango final generica.");
+			} 
+			else
+				throw ASTError("ForStatement","El Tipo del Rango Inicial y el Rango Final deben ser Enteros");
 		}
 	}else{
-		block->entornoTipoActual->Put(varname,new Entero());
+		block->actualTypeEnvironment->Put(varname,new Entero());
 	}
 }
 
@@ -912,10 +1429,10 @@ void ReturnStatement::validarSemantica()
 
 	if(enclosingMethod!=NULL)
 	{
-		Tipo* t = enclosingMethod->block->entornoTipoActual->get(enclosingMethod->methodName);
+		Tipo* t = enclosingMethod->block->actualTypeEnvironment->get(enclosingMethod->methodName);
 		Funcion* func = dynamic_cast<Funcion*>(t);
 
-		if(func->retorno != NULL)
+		if(func->retorno->getTipo() != Types::generico)
 		{
 			if(!t_return->EsEquivalente(func->retorno))
 			{
@@ -923,7 +1440,7 @@ void ReturnStatement::validarSemantica()
 			}
 		} else {
 			func->retorno = t_return;
-			enclosingMethod->block->entornoTipoActual->Set(enclosingMethod->methodName,func);
+			//enclosingMethod->block->actualTypeEnvironment->Set(enclosingMethod->methodName,func);
 		}
 	} else
 		throw ASTError("ReturnStatement","Return inalcanzable o fuera de una funcion");
@@ -1029,7 +1546,7 @@ void PrintStatement::validarSemantica()
 
 Sentence::Sentence()
 {
-	entornoTiposActual = environment;
+	actualTypeEnvironment = entornoTiposActual;
 }
 
 #pragma endregion
@@ -1093,11 +1610,11 @@ void MethodDeclNode::validarSemantica()
 			throw ASTError("MethodDeclNode", "Ya existe un argumento con el nombre " + methodArguments[x]);
 		} else {
 			funcion->Parametros[methodArguments[x]] = new Generico();
-			this->block->entornoTipoActual->Put(methodArguments[x], new Generico());
+			this->block->actualTypeEnvironment->Put(methodArguments[x], new Generico());
 		}
 	}
 
-	this->entornoTiposActual->Put(this->methodName,funcion);
+	this->actualTypeEnvironment->Put(this->methodName,funcion);
 	block->validarSemantica();
 }
 
@@ -1124,11 +1641,15 @@ string ProgramNode::ToString()
 		retorno += method_decl_list[x]->ToString() + "\n";
 	}
 
+
+
 	return retorno;
 }
 
 void ProgramNode::validarSemantica()
 {
+	bool hasMain = false;
+
 	for(int x=0;x<field_decl_list.size();x++)
 	{
 		field_decl_list.at(x)->validarSemantica();
@@ -1137,7 +1658,13 @@ void ProgramNode::validarSemantica()
 	for(int x=0;x<method_decl_list.size();x++)
 	{
 		method_decl_list.at(x)->validarSemantica();
+
+		if (method_decl_list[x]->methodName == "main")
+			hasMain = true;
 	}
+
+	if (hasMain == false)
+		ASTError("ProgramNode", "No existe metodo main");
 }
 
 #pragma endregion
@@ -1323,6 +1850,7 @@ EntornoTipos::EntornoTipos(EntornoTipos* anterior)
 {	
 	entornoAnterior = anterior;
 }
+
 void EntornoTipos::Put(string key,Tipo *type)
 {
 	if(tablaSimbolosEntorno.count(key) > 0)
@@ -1333,6 +1861,7 @@ void EntornoTipos::Put(string key,Tipo *type)
 	}else
 		tablaSimbolosEntorno[key] = type;
 }
+
 Tipo* EntornoTipos:: get(string key)
 {
 	for(EntornoTipos *e = this;e!=NULL;e = e->entornoAnterior)

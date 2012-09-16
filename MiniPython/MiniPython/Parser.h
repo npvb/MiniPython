@@ -12,7 +12,7 @@
 
 using namespace std;
 
-extern EntornoTipos* environment;
+extern EntornoTipos* entornoTiposActual;
 extern MethodDeclNode* funcionActual;
 extern int fila;
 extern IterationStatement* cicloActual;
@@ -202,7 +202,7 @@ public:
 				token = lex->NextToken();
 				if(token.getTipo() == TokenType::ID)
 				{
-					environment = new EntornoTipos(NULL);
+					entornoTiposActual = new EntornoTipos(NULL);
 					
 					ProgramNode *prgm = new ProgramNode(token.lexema);
 
@@ -230,7 +230,7 @@ public:
 						{
 							token = lex->NextToken();
 						}
-						environment = NULL;
+						entornoTiposActual = NULL;
 						return prgm;
 					}else
 					{
@@ -330,8 +330,8 @@ public:
 		{
 			InicioBloque();
 
-			EntornoTipos* savedEnv  = environment;
-			environment = new EntornoTipos(environment);
+			EntornoTipos* savedEnv  = entornoTiposActual;
+			entornoTiposActual = new EntornoTipos(entornoTiposActual);
 			BlockStatement *blck = new BlockStatement();
 		
 			while(isStatement())
@@ -341,7 +341,7 @@ public:
 			}
 				
 			FinBloque();
-			environment = savedEnv;
+			entornoTiposActual = savedEnv;
 
 			return blck;
 			

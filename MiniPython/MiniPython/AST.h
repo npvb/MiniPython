@@ -10,6 +10,7 @@
 #include <map>
 
 using namespace std;
+
 extern int fila;
 
 class Tipo;
@@ -26,7 +27,8 @@ public:
 
 class EntornoTipos;
 
- #pragma region Expresiones
+#pragma region Expresiones
+
 enum ExprType
 {
 	opBin,
@@ -40,7 +42,7 @@ class Expr: public ASTNode
 public:
 	Expr();
 	virtual Tipo* validarSemantica();
-	EntornoTipos* actTypeEnvironment;
+	EntornoTipos* actualTypeEnvironment;
 	virtual int getTipoExpr();
 };
 
@@ -250,13 +252,18 @@ public:
 #pragma endregion
 
  #pragma region LValueExpr
+
+class MethodDeclNode;
+
 class LValueExpr : public Expr
 {
 public:
 	string varname;
+	MethodDeclNode* enclosingMethod;
 
 	LValueExpr(string nombre);
 	int getTipoExpr();
+	virtual void SetTipo(Tipo *t) = 0;
 };
 
 class IDExpr : public LValueExpr
@@ -266,6 +273,7 @@ public:
 
 	string ToString();
 	Tipo* validarSemantica();
+	void SetTipo(Tipo *t);
 };
 
 class ArrayExpr : public LValueExpr
@@ -276,7 +284,10 @@ public:
 
 	string ToString();
 	Tipo* validarSemantica();
+	void SetTipo(Tipo *t);
 };
+
+#pragma endregion
 
 class MethodCallExpr : public Expr
 {
@@ -289,11 +300,10 @@ public:
 	string ToString();
 	Tipo* validarSemantica();
 };
-#pragma endregion
 
 #pragma endregion
 
- #pragma region Statements
+#pragma region Statements
 
 class MethodDeclNode;
 
@@ -309,11 +319,10 @@ class BlockStatement : public Statement
 {
 public:
 	vector<Statement *> statements;
-	EntornoTipos* entornoTipoActual;
+	EntornoTipos* actualTypeEnvironment;
 	BlockStatement();
 	string ToString();
 	void validarSemantica();
-
 };
 
 class AssignStatement : public Statement
@@ -450,11 +459,12 @@ public:
 
 #pragma endregion
 
- #pragma region Program
+#pragma region Program
+
 class Sentence: public ASTNode
 {
 public:
-	EntornoTipos* entornoTiposActual;
+	EntornoTipos* actualTypeEnvironment;
 	Sentence();
 	virtual void validarSemantica()=0;
 };
@@ -583,6 +593,7 @@ public:
 #pragma endregion
 
 #pragma region EntornoTipos
+
 class EntornoTipos
 {
 public:

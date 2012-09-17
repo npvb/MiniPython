@@ -3,7 +3,7 @@ class GreatestCommonDivisor:
 	b = 20
 
 	def gcd (a, b):
-		a = b + 10
+		a = b*10
 		return a
 
 	def main:

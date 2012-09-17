@@ -1077,8 +1077,9 @@ public:
 		{
 			if(Numero())
 			{
+				string lexem = token.lexema;
 				token = lex->NextToken();
-				return new NumExpr();
+				return new NumExpr(atoi(lexem.c_str()));
 
 			}else if(Boolean())
 			{
@@ -1086,8 +1087,9 @@ public:
 
 			}else if(token.getTipo() == TokenType::LIT_CADENA || token.getTipo() == TokenType::ID)
 			{
+				string lexe = token.lexema;
 				token = lex->NextToken();
-				return new CharExpr();
+				return new CharExpr(lexe);
 			}
 			
 		}catch (char* e)
@@ -1100,11 +1102,19 @@ public:
 	{
 		try
 		{
+			bool val = false;
 			if(Boolean())
 			{
+				
+				if(token.lexema == "true")
+				{
+					val = true;
+				}
 				token = lex->NextToken();
 			}
-			return new BooleanExpr();
+
+			return new BooleanExpr(val);
+
 		}catch (char* e)
         {
 			throw PythonError("bool_const",e);

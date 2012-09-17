@@ -14,6 +14,8 @@ extern EntornoTipos* entornoTiposActual;
 extern MethodDeclNode* funcionActual;
 extern IterationStatement* cicloActual;
 
+PilaEntornos pilaEntornoActual;
+
 #pragma region ASTNode
 
 ASTNode::ASTNode()
@@ -42,6 +44,11 @@ Expr::Expr()
 Tipo* Expr::validarSemantica() 
 {
 	throw ASTError("validarSemantica","Error Semantica");
+}
+
+Result* Expr::Evaluate()
+{
+	throw ASTError("Evaluate","Error Interpretación");
 }
 
 int Expr::getTipoExpr()
@@ -114,6 +121,14 @@ Tipo* MayorExpr:: validarSemantica()
 		throw ASTError("MayorExpr","Tipos de la Expresion MAYOR (>) deben ser: entero.");
 }
 
+Result* MayorExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new BoolResult(r_der->value > r_izq->value);
+}
 #pragma endregion
 
 #pragma region MenorExpr
@@ -161,6 +176,14 @@ Tipo* MenorExpr::validarSemantica()
 		throw ASTError("MenorExpr","Tipos de la Expresion MENOR (<) deben ser: entero.");
 }
 
+Result* MenorExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new BoolResult(r_der->value < r_izq->value);
+}
 #pragma endregion
 
 #pragma region MayorIgualExpr
@@ -205,6 +228,15 @@ Tipo* MayorIgualExpr::validarSemantica()
 		return new Booleano();
 	}else
 		throw ASTError("MayorIgualExpr","Tipos de la Expresion MAYOR IGUAL (>=) deben ser: entero.");
+}
+
+Result* MayorIgualExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new BoolResult(r_der->value >= r_izq->value);
 }
 
 #pragma endregion
@@ -254,6 +286,15 @@ Tipo* MenorIgualExpr::validarSemantica()
 		throw ASTError("MenorIgualExpr","Tipos de la Expresion MENOR (<) deben ser: entero.");
 }
 
+Result* MenorIgualExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new BoolResult(r_der->value <= r_izq->value);
+}
+
 #pragma endregion
 
 #pragma region DistintoExpr
@@ -300,6 +341,14 @@ Tipo* DistintoExpr::validarSemantica()
 		throw ASTError("DistintoExpr","Tipos de la Expresion -DISTINTO DE (!=) deben ser: entero.");
 }
 
+Result* DistintoExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new BoolResult(r_der->value != r_izq->value);
+}
 #pragma endregion
 
 #pragma region IgualExpr
@@ -347,6 +396,14 @@ Tipo* IgualExpr::validarSemantica()
 		throw ASTError("IgualExpr","Tipos de la Expresion IGUAL (=) deben ser: entero.");
 }
 
+Result* IgualExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new BoolResult(r_der->value == r_izq->value);
+}
 #pragma endregion
 
 #pragma region ModExpr
@@ -392,6 +449,15 @@ Tipo* ModExpr::validarSemantica()
 		return new Entero();
 	}else
 		throw ASTError("ModExpr","Tipos de la Expresion MOD deben ser: entero.");
+}
+
+Result* ModExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new IntResult(r_der->value % r_izq->value);
 }
 
 #pragma endregion
@@ -445,6 +511,14 @@ Tipo* AndExpr::validarSemantica()
 		throw ASTError("AndExpr","Tipos de la Expresion AND deben ser: booleano.");
 }
 
+Result* AndExpr::Evaluate()
+{
+	BoolResult* r_der = dynamic_cast<BoolResult*>(expr_der->Evaluate());
+	BoolResult* r_izq = dynamic_cast<BoolResult*>(expr_izq->Evaluate());
+	
+
+	return new BoolResult(r_der->value && r_izq->value);
+}
 #pragma endregion
 
 #pragma region OrExpr
@@ -496,6 +570,15 @@ Tipo* OrExpr::validarSemantica()
 		throw ASTError("OrExpr","Tipos de la Expresion OR deben ser: booleano.");
 }
 
+Result* OrExpr::Evaluate()
+{
+	BoolResult* r_der = dynamic_cast<BoolResult*>(expr_der->Evaluate());
+	BoolResult* r_izq = dynamic_cast<BoolResult*>(expr_izq->Evaluate());
+	
+
+	return new BoolResult(r_der->value || r_izq->value);
+}
+
 #pragma endregion
 
 #pragma region SumaExpr
@@ -544,6 +627,14 @@ Tipo* SumaExpr::validarSemantica()
 
 }
 
+Result* SumaExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new IntResult(r_der->value + r_izq->value);
+}
 #pragma endregion
 
 #pragma region RestaExpr
@@ -591,6 +682,14 @@ Tipo* RestaExpr::validarSemantica()
 		throw ASTError("RestaExpr","Tipos de la Expresion RESTA deben ser: entero.");
 }
 
+Result* RestaExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new IntResult(r_der->value - r_izq->value);
+}
 #pragma endregion
 
 #pragma region DivisionExpr
@@ -638,6 +737,17 @@ Tipo* DivisionExpr::validarSemantica()
 		throw ASTError("DivisionExpr","Tipos de la Expresion DIVISION deben ser: entero.");
 }
 
+Result* DivisionExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+	if(r_izq->value == 0)
+	{
+		throw ASTError("DivisionExpr","No se Puede Dividir entre 0");
+	}else
+		return new IntResult(r_der->value / r_izq->value);
+}
 #pragma endregion
 
 #pragma region MultiplicacionExpr
@@ -685,6 +795,14 @@ Tipo* MultiplicacionExpr::validarSemantica()
 		throw ASTError("MultiplicacionExpr","Tipos de la Expresion MULTIPLICACION deben ser: entero.");
 }
 
+Result* MultiplicacionExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new IntResult(r_der->value * r_izq->value);
+}
 #pragma endregion
 
 #pragma region ShiftLeftExpr
@@ -730,6 +848,15 @@ Tipo* ShiftLeftExpr::validarSemantica()
 		return new Entero();
 	}else
 		throw ASTError("ShiftLeftExpr","Tipos de la Expresion SHIFTLEFT deben ser: entero.");
+}
+
+Result* ShiftLeftExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new IntResult(r_der->value << r_izq->value);
 }
 
 #pragma endregion
@@ -779,6 +906,14 @@ Tipo* ShiftRightExpr::validarSemantica()
 		throw ASTError("ShiftRightExpr","Tipos de la Expresion SHIFTRIGHT deben ser: entero.");
 }
 
+Result* ShiftRightExpr::Evaluate()
+{
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	
+
+	return new IntResult(r_der->value >> r_izq->value);
+}
 #pragma endregion
 
 #pragma endregion
@@ -829,6 +964,13 @@ Tipo* NegateExpr::validarSemantica()
 		throw ASTError("NegateExpr","Tipos de la Expresion NEGATE (-) deben ser: entero.");
 }
 
+Result* NegateExpr::Evaluate()
+{
+	IntResult* r = dynamic_cast<IntResult*>(expresion->Evaluate());
+
+	return new IntResult(-1*r->value);
+}
+
 #pragma endregion
 
 #pragma region InvertExpr
@@ -861,6 +1003,13 @@ Tipo* InvertExpr::validarSemantica()
 		throw ASTError("InvertExpr","Tipos de la Expresion INVERT (~) deben ser: entero.");
 }
 
+Result* InvertExpr::Evaluate()
+{
+	IntResult* r = dynamic_cast<IntResult*>(expresion->Evaluate());
+
+	return new IntResult( ~r->value);
+}
+
 #pragma endregion
 
 #pragma endregion
@@ -882,6 +1031,10 @@ Tipo* NumExpr::validarSemantica()
 	return new Entero();
 }
 
+Result* NumExpr::Evaluate()
+{
+	return new IntResult(this->value);
+}
 
 string CharExpr::ToString()
 {
@@ -893,6 +1046,11 @@ Tipo* CharExpr::validarSemantica()
 	return new CharConstant();
 }
 
+Result* CharExpr::Evaluate()
+{
+	return new CharResult(this->value);
+}
+
 string BooleanExpr::ToString()
 {
 	return " BOOLEAN ";
@@ -901,6 +1059,11 @@ string BooleanExpr::ToString()
 Tipo* BooleanExpr::validarSemantica()
 {
 	return new Booleano();
+}
+
+Result* BooleanExpr::Evaluate()
+{
+	return new BoolResult(this->value);
 }
 
 #pragma endregion
@@ -962,6 +1125,13 @@ void IDExpr::SetTipo(Tipo *t)
 	}
 }
 
+Result* IDExpr::Evaluate()
+{
+	Result* r = pilaEntornoActual.get(varname)->value;
+	
+	return r;	
+}
+
 #pragma endregion
 
 #pragma region ArrayExpr
@@ -1006,6 +1176,10 @@ void ArrayExpr::SetTipo(Tipo *t)
 		throw ASTError("ArrayExpr",varname+" no es de Tipo Arreglo");
 }
 
+Result* ArrayExpr::Evaluate()
+{
+	throw ASTError("ArrayExpr","NO IMPLEMENTADO");
+}
 #pragma endregion
 
 #pragma endregion
@@ -1161,6 +1335,23 @@ void AssignStatement::validarSemantica()
 		}	
 	}else
 		throw ASTError("AssignStatement","El Lado Izquierdo debe ser Un arreglo o una variable");
+}
+
+void AssignStatement::Exec()
+{
+	LValueExpr* lv = dynamic_cast<LValueExpr*>(this->leftValue);
+	Result* r_der = this->rightValue->Evaluate();
+
+	if (pilaEntornoActual.Exists(lv->varname))
+	{
+		Variable* var = pilaEntornoActual.get(lv->varname);
+		var->value = r_der;
+	}else
+	{
+		Variable* var = new Variable(lv->varname,r_der);
+		pilaEntornoActual.put(lv->varname,var);
+	}
+
 }
 
 #pragma endregion
@@ -1641,8 +1832,6 @@ string ProgramNode::ToString()
 		retorno += method_decl_list[x]->ToString() + "\n";
 	}
 
-
-
 	return retorno;
 }
 
@@ -1665,6 +1854,28 @@ void ProgramNode::validarSemantica()
 
 	if (hasMain == false)
 		ASTError("ProgramNode", "No existe metodo main");
+}
+
+void ProgramNode::Interpretar()
+{
+	pilaEntornoActual.push(new EntornoVariables);
+	for(int x=0;x<field_decl_list.size();x++)
+	{
+		field_decl_list.at(x)->Interpretar();
+	}
+
+	MethodDeclNode* Main=NULL;
+	for(int x=0;x<method_decl_list.size();x++)
+	{
+		if (method_decl_list[x]->methodName == "main"){
+			Main = method_decl_list[x];
+			break;
+		}
+	}
+
+	Main->Interpretar();
+
+	pilaEntornoActual.pop();
 }
 
 #pragma endregion
@@ -1900,3 +2111,96 @@ bool EntornoTipos::Exists(string key)
 }
 
 #pragma endregion
+
+Variable::Variable(string nombre,Result* val)
+{
+	name = nombre;
+	value = val;
+}
+
+IntResult::IntResult(int val)
+{
+	value = val;
+}
+
+Result* IntResult::getValue()
+{
+	return new IntResult(value);
+}
+
+int IntResult::getTipo()
+{
+	return TipoResult::Entero;
+}
+
+BoolResult::BoolResult(bool val)
+{
+	value = val;
+}
+
+Result* BoolResult::getValue()
+{
+	return new BoolResult(value);
+}
+
+int IntResult::getTipo()
+{
+	return TipoResult::Boolean;
+}
+
+CharResult::CharResult(string val)
+{
+	value = val;
+}
+
+Result* CharResult::getValue()
+{
+	return new CharResult(value);
+}
+
+int CharResult::getTipo()
+{
+	return TipoResult::Character;
+}
+
+void PilaEntornos::push(EntornoVariables* entvar)
+{
+	PilaEntornoVariablesActual.push_back(entvar);
+}
+
+void PilaEntornos::pop()
+{
+	PilaEntornoVariablesActual.pop_back();
+}
+
+void PilaEntornos::put(string key, Variable* var)
+{
+	PilaEntornoVariablesActual.back()->tablaVariables[key] = var;
+}
+
+Variable* PilaEntornos::get(string key)
+{
+	for(int x=0;x<PilaEntornoVariablesActual.size();x++)
+	{
+		if(PilaEntornoVariablesActual.at(x)->tablaVariables.count(key)>0)
+		{
+			return PilaEntornoVariablesActual.at(x)->tablaVariables[key];
+		}
+	}
+
+	string msg;
+	msg="Variable "+key+" No Existe! \n";
+	throw exception(msg.c_str());
+}
+
+bool PilaEntornos::Exists(string key)
+{
+	for(int x=0;x<PilaEntornoVariablesActual.size();x++)
+	{
+		if(PilaEntornoVariablesActual.at(x)->tablaVariables.count(key)>0)
+		{
+			return true;
+		}
+	}
+ 	return false;
+}

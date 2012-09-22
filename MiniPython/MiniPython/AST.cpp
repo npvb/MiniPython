@@ -1294,7 +1294,7 @@ Result* MethodCallExpr::Evaluate()
 	for(int x=0;x<Parametros.size();x++)
 	{
 		Result* resultado = Parametros.at(x)->Evaluate();
-		Variable* var = new Variable(p->metodo->methodName,resultado);
+		Variable* var = new Variable(p->metodo->methodArguments.at(x),resultado);
 		regact->tablaVariables[p->metodo->methodArguments.at(x)] = var;
 	}
 
@@ -2421,7 +2421,7 @@ void PilaEntornos::put(string key, Variable* var)
 
 Variable* PilaEntornos::get(string key)
 {
-	for(int x=0;x<PilaEntornoVariablesActual.size();x++)
+	for(int x=PilaEntornoVariablesActual.size()-1;x>=0;x--)
 	{
 		if(PilaEntornoVariablesActual.at(x)->tablaVariables.count(key)>0)
 		{
@@ -2436,7 +2436,7 @@ Variable* PilaEntornos::get(string key)
 
 bool PilaEntornos::Exists(string key)
 {
-	for(int x=0;x<PilaEntornoVariablesActual.size();x++)
+	for(int x=PilaEntornoVariablesActual.size()-1;x>=0;x--)
 	{
 		if(PilaEntornoVariablesActual.at(x)->tablaVariables.count(key)>0)
 		{

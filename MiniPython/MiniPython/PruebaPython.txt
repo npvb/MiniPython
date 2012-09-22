@@ -9,4 +9,5 @@ class GreatestCommonDivisor:
 	def main:
 		x = 12
 		y = 1
+		x = false
 		gcd (x,y)

@@ -1132,6 +1132,18 @@ Result* IDExpr::Evaluate()
 	return r;	
 }
 
+void IDExpr::setResult(Result* r)
+{
+	if (pilaEntornoActual.Exists(this->varname))
+	{
+		Variable* var = pilaEntornoActual.get(this->varname);
+		var->value = r;
+	}else
+	{
+		Variable* var = new Variable(this->varname,r);
+		pilaEntornoActual.put(this->varname,var);
+	}
+}
 #pragma endregion
 
 #pragma region ArrayExpr
@@ -1272,6 +1284,8 @@ Statement::Statement()
 BlockStatement::BlockStatement()
 {
 	actualTypeEnvironment = entornoTiposActual;
+	brekio = false;
+	continuar = false;
 }
 
 string BlockStatement::ToString()
@@ -1294,6 +1308,22 @@ void BlockStatement::validarSemantica()
 	}
 }
 
+void BlockStatement::Exec()
+{
+	for(int x =0;x<statements.size();x++)
+	{
+		statements.at(x)->Exec();
+
+		if(brekio == true)
+		{
+			break;
+		}else if(continuar == true)
+		{
+			continuar = false;
+			continue;
+		}
+	}
+}
 #pragma endregion
 
 #pragma region AssignStatement
@@ -1342,15 +1372,8 @@ void AssignStatement::Exec()
 	LValueExpr* lv = dynamic_cast<LValueExpr*>(this->leftValue);
 	Result* r_der = this->rightValue->Evaluate();
 
-	if (pilaEntornoActual.Exists(lv->varname))
-	{
-		Variable* var = pilaEntornoActual.get(lv->varname);
-		var->value = r_der;
-	}else
-	{
-		Variable* var = new Variable(lv->varname,r_der);
-		pilaEntornoActual.put(lv->varname,var);
-	}
+	lv->setResult(r_der);
+	
 
 }
 
@@ -1393,6 +1416,7 @@ ElseIfBlockStatement::ElseIfBlockStatement(Expr *cond, BlockStatement *blck)
 {
 	condition = cond;
 	block = blck;
+	ejecutado = false;
 }
 
 string ElseIfBlockStatement::ToString()
@@ -1422,6 +1446,16 @@ void ElseIfBlockStatement::validarSemantica()
 		throw ASTError("ElseIfBlockStatement","La condicion del elif debe ser de tipo Booleano");
 }
 
+void ElseIfBlockStatement::Exec()
+{
+	BoolResult* conditionElif = dynamic_cast<BoolResult*>(condition->Evaluate());
+
+	if(conditionElif->value)
+	{
+		block->Exec();
+		ejecutado = true;
+	}
+}
 #pragma endregion
 
 #pragma region IfStatement
@@ -1485,6 +1519,37 @@ void IfStatement::validarSemantica()
 		throw ASTError("IfStatement","La condicion del if debe ser de tipo Booleano");
 }
 
+void IfStatement::Exec()
+{
+	BoolResult* condicionIf = dynamic_cast<BoolResult*>(condition->Evaluate());
+
+	if(condicionIf->value)
+	{
+		ifBlock->Exec();
+
+	}else
+	{
+		bool flag = false;
+		for(int x=0;x<elifBlock_list.size();x++)
+		{
+			elifBlock_list.at(x)->Exec();
+
+			if(elifBlock_list.at(x)->ejecutado)
+			{
+				flag = true;
+				break;
+			}
+		}
+		if(flag == false)
+		{
+			if(elseBlock!=NULL)
+			{
+				elseBlock->Exec();
+			}
+		}
+	}
+
+}
 #pragma endregion
 
 #pragma region IterationStatement
@@ -1525,6 +1590,16 @@ void WhileStatement::validarSemantica()
 		throw ASTError("WhileStatement","La condicion del while debe ser de tipo Booleano");
 }
 
+void WhileStatement::Exec()
+{
+	BoolResult* wCondition = dynamic_cast<BoolResult*>(condition->Evaluate());
+
+	while(wCondition->value)
+	{
+		block->Exec();
+	}
+
+}
 #pragma endregion
 
 #pragma region ForStatement
@@ -1593,6 +1668,42 @@ void ForStatement::validarSemantica()
 	}
 }
 
+void ForStatement::Exec()
+{
+	IDExpr* variable = NULL;
+	IntResult* valorExpInicial = dynamic_cast<IntResult*>(exprInicial->Evaluate());
+	IntResult* valorExpFinal = dynamic_cast<IntResult*>(exprFinal->Evaluate());
+
+	if(pilaEntornoActual.Exists(varname))
+	{
+		variable = pilaEntornoActual.get(varname);
+		variable->setResult(valorExpInicial);	
+
+	}else
+	{
+		Variable* var = new Variable(varname, valorExpInicial);
+		pilaEntornoActual.put(varname,valorExpInicial);
+	}
+	
+	IntResult* valorVariable = dynamic_cast<IntResult*>(variable->Evaluate());
+	
+	if(valorExpInicial->value < valorExpFinal->value)
+	{
+		while(valorVariable->value < valorExpFinal->value )
+		{
+			block->Exec();
+			valorVariable->value++;
+		}
+	}else
+	{
+		while(valorVariable->value > valorExpFinal->value )
+		{
+			block->Exec();
+			valorVariable->value--;
+		}
+	}
+}
+
 #pragma endregion
 
 #pragma endregion
@@ -1656,6 +1767,11 @@ void BreakStatement::validarSemantica()
 	}
 }
 
+void BreakStatement::Exec()
+{
+	enclosingMethod->block->brekio = true;
+	
+}
 #pragma endregion
 
 #pragma region ContinueStatement
@@ -1675,6 +1791,10 @@ void ContinueStatement::validarSemantica()
 	}
 }
 
+void ContinueStatement::Exec()
+{
+	enclosingMethod->block->continuar = true;
+}
 #pragma endregion
 
 #pragma region ReadStatement
@@ -1697,6 +1817,33 @@ void ReadStatement::validarSemantica()
 	}
 }
 
+void ReadStatement::Exec()
+{
+	LValueExpr* valor = dynamic_cast<LValueExpr*>(value);
+	Tipo* t = value->validarSemantica();
+
+	if(t->getTipo() == Types::entero)
+	{
+		int intres = 0;
+		cin>>intres;
+		IntResult* intresul = new IntResult (intres);
+		valor->setResult(intresul);
+
+	}else if (t->getTipo() == Types::booleano)
+	{
+		bool booleanRes = false;
+		cin>>boolRes;
+		BoolResult* boolresul = new BoolResult (boolRes);
+		valor->setResult(boolresul);	
+
+	}else 
+	{
+		string strRes = "";
+		cin>>strRes;
+		CharResult* charresul = new CharResult (strRes);
+		valor->setResult(charresul);		
+	}
+}
 #pragma endregion
 
 #pragma region PrintStatement
@@ -1727,6 +1874,13 @@ void PrintStatement::validarSemantica()
 		throw ASTError("PrintStatement","No Hay Valores a Imprimir");
 }
 
+void PrintStatement::Exec()
+{
+	for(int x=0;x<printlist.size();x++)
+	{
+		printlist.at(x)->Evaluate()->Print();
+	}
+}
 #pragma endregion
 
 #pragma endregion
@@ -1757,6 +1911,11 @@ string FieldDeclNode::ToString()
 void FieldDeclNode::validarSemantica()
 {
 	decl_stmnt->validarSemantica();
+}
+
+void FieldDeclNode::Interpretar()
+{
+	decl_stmnt->Exec();
 }
 
 #pragma endregion
@@ -2112,6 +2271,7 @@ bool EntornoTipos::Exists(string key)
 
 #pragma endregion
 
+#pragma region Variable/Result
 Variable::Variable(string nombre,Result* val)
 {
 	name = nombre;
@@ -2123,6 +2283,11 @@ IntResult::IntResult(int val)
 	value = val;
 }
 
+void IntResult::Print()
+{
+	cout<<this->value<<endl;
+}
+
 Result* IntResult::getValue()
 {
 	return new IntResult(value);
@@ -2130,7 +2295,7 @@ Result* IntResult::getValue()
 
 int IntResult::getTipo()
 {
-	return TipoResult::Entero;
+	return TipoResult::ResultEntero;
 }
 
 BoolResult::BoolResult(bool val)
@@ -2143,10 +2308,14 @@ Result* BoolResult::getValue()
 	return new BoolResult(value);
 }
 
-int IntResult::getTipo()
+void BoolResult::Print()
 {
-	return TipoResult::Boolean;
+	cout<<this->value<<endl;
 }
+/*int IntResult::getTipo()
+{
+	return TipoResult::ResultBoolean;
+}*/
 
 CharResult::CharResult(string val)
 {
@@ -2160,7 +2329,12 @@ Result* CharResult::getValue()
 
 int CharResult::getTipo()
 {
-	return TipoResult::Character;
+	return TipoResult::ResultCharacter;
+}
+
+void CharResult::Print()
+{
+	cout<<this->value<<endl;
 }
 
 void PilaEntornos::push(EntornoVariables* entvar)
@@ -2204,3 +2378,4 @@ bool PilaEntornos::Exists(string key)
 	}
  	return false;
 }
+#pragma endregion

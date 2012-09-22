@@ -288,6 +288,7 @@ public:
 
 	LValueExpr(string nombre);
 	int getTipoExpr();
+	virtual void setResult(Result* r)=0;
 	virtual void SetTipo(Tipo *t) = 0;
 };
 
@@ -299,6 +300,7 @@ public:
 	string ToString();
 	Tipo* validarSemantica();
 	void SetTipo(Tipo *t);
+	void setResult(Result* r);
 	Result* Evaluate();
 };
 
@@ -349,9 +351,12 @@ class BlockStatement : public Statement
 public:
 	vector<Statement *> statements;
 	EntornoTipos* actualTypeEnvironment;
+	bool brekio;
+	bool continuar;
 	BlockStatement();
 	string ToString();
 	void validarSemantica();
+	void Exec();
 };
 
 class AssignStatement : public Statement
@@ -384,6 +389,7 @@ class ElseIfBlockStatement : public Statement
 public:
 	Expr *condition;
 	BlockStatement *block;
+	bool ejecutado;
 
 	ElseIfBlockStatement(Expr *cond, BlockStatement *blck);
 
@@ -674,6 +680,7 @@ class Result
 public:
 	virtual Result* getValue() = 0;
 	virtual int getTipo()=0;
+	virtual void Print()=0;
 };
 
 class IntResult:public Result
@@ -683,6 +690,7 @@ public:
 	IntResult(int valor);
 	Result* getValue();
 	int getTipo();
+	void Print();
 };
 
 class BoolResult:public Result
@@ -692,6 +700,7 @@ public:
 	BoolResult(bool val);
 	Result* getValue();
 	int getTipo();
+	void Print();
 };
 
 class CharResult:public Result
@@ -701,6 +710,7 @@ public:
 	CharResult(string val);
 	Result* getValue();
 	int getTipo();
+	void Print();
 };
 #pragma endregion
 

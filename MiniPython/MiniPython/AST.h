@@ -313,6 +313,7 @@ public:
 	string ToString();
 	Tipo* validarSemantica();
 	void SetTipo(Tipo *t);
+	void setResult(Result* r);
 	Result* Evaluate();
 };
 
@@ -531,6 +532,7 @@ class MethodDeclNode : public Sentence
 {
 public:
 	string methodName;
+	Result* retorno;
 	vector<string> methodArguments;
 	BlockStatement *block;
 	void validarSemantica();
@@ -733,4 +735,12 @@ public:
 };
 #pragma endregion
 
+class Procedure
+{
+public:
+	MethodDeclNode* metodo;
+	//EntornoVariables* getEnvironment();
+	//BlockStatement* getBlock();
+	Procedure(MethodDeclNode* metodo);
+};
 #endif

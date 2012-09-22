@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <map>;
 
 using namespace std;
 
@@ -13,6 +14,8 @@ extern int fila;
 extern EntornoTipos* entornoTiposActual;
 extern MethodDeclNode* funcionActual;
 extern IterationStatement* cicloActual;
+map<string,Procedure*> Procedimientos;
+
 
 PilaEntornos pilaEntornoActual;
 
@@ -1026,6 +1029,11 @@ string NumExpr::ToString()
 	return " NUM ";
 }
 
+NumExpr::NumExpr(int val)
+{
+	value = val;
+}
+
 Tipo* NumExpr::validarSemantica()
 {
 	return new Entero();
@@ -1034,6 +1042,11 @@ Tipo* NumExpr::validarSemantica()
 Result* NumExpr::Evaluate()
 {
 	return new IntResult(this->value);
+}
+
+CharExpr::CharExpr(string val)
+{
+	value = val;
 }
 
 string CharExpr::ToString()
@@ -1051,6 +1064,10 @@ Result* CharExpr::Evaluate()
 	return new CharResult(this->value);
 }
 
+BooleanExpr::BooleanExpr(bool val)
+{
+	value = val;
+}
 string BooleanExpr::ToString()
 {
 	return " BOOLEAN ";
@@ -1192,6 +1209,11 @@ Result* ArrayExpr::Evaluate()
 {
 	throw ASTError("ArrayExpr","NO IMPLEMENTADO");
 }
+
+void ArrayExpr::setResult(Result* r)
+{
+	throw ASTError("ArrayExpr","NO IMPLEMENTADO");
+}
 #pragma endregion
 
 #pragma endregion
@@ -1264,6 +1286,24 @@ Tipo* MethodCallExpr::validarSemantica()
 	}
 }
 
+Result* MethodCallExpr::Evaluate()
+{
+	Procedure* p = Procedimientos[this->nombre_funcion];
+	EntornoVariables* regact =new EntornoVariables();
+
+	for(int x=0;x<Parametros.size();x++)
+	{
+		Result* resultado = Parametros.at(x)->Evaluate();
+		Variable* var = new Variable(p->metodo->methodName,resultado);
+		regact->tablaVariables[p->metodo->methodArguments.at(x)] = var;
+	}
+
+	pilaEntornoActual.push(regact);
+	p->metodo->block->Exec();
+	pilaEntornoActual.pop();
+
+	return p->metodo->retorno;
+}
 #pragma endregion
 
 #pragma endregion
@@ -1312,8 +1352,13 @@ void BlockStatement::Exec()
 {
 	for(int x =0;x<statements.size();x++)
 	{
-		statements.at(x)->Exec();
+		if(enclosingMethod->retorno!=NULL)
+		{
+			break;
+		}
 
+		statements.at(x)->Exec();
+		
 		if(brekio == true)
 		{
 			break;
@@ -1406,6 +1451,11 @@ string MethodCallStatement::ToString()
 void MethodCallStatement::validarSemantica()
 {
 	this->methodCall->validarSemantica();
+}
+
+void MethodCallStatement::Exec()
+{
+	methodCall->Evaluate();
 }
 
 #pragma endregion
@@ -1670,19 +1720,19 @@ void ForStatement::validarSemantica()
 
 void ForStatement::Exec()
 {
-	IDExpr* variable = NULL;
+	IDExpr* variable = new IDExpr(varname);
 	IntResult* valorExpInicial = dynamic_cast<IntResult*>(exprInicial->Evaluate());
 	IntResult* valorExpFinal = dynamic_cast<IntResult*>(exprFinal->Evaluate());
 
 	if(pilaEntornoActual.Exists(varname))
 	{
-		variable = pilaEntornoActual.get(varname);
+		Variable* variabl = pilaEntornoActual.get(varname);
 		variable->setResult(valorExpInicial);	
 
 	}else
 	{
 		Variable* var = new Variable(varname, valorExpInicial);
-		pilaEntornoActual.put(varname,valorExpInicial);
+		pilaEntornoActual.put(varname,var);
 	}
 	
 	IntResult* valorVariable = dynamic_cast<IntResult*>(variable->Evaluate());
@@ -1748,6 +1798,12 @@ void ReturnStatement::validarSemantica()
 		throw ASTError("ReturnStatement","Return inalcanzable o fuera de una funcion");
 }
 
+void ReturnStatement::Exec()
+{
+	Result* res = dynamic_cast<Result*>(expr->Evaluate());
+	enclosingMethod->retorno = res;
+
+}
 #pragma endregion
 
 #pragma region BreakStatement
@@ -1832,8 +1888,8 @@ void ReadStatement::Exec()
 	}else if (t->getTipo() == Types::booleano)
 	{
 		bool booleanRes = false;
-		cin>>boolRes;
-		BoolResult* boolresul = new BoolResult (boolRes);
+		cin>>booleanRes;
+		BoolResult* boolresul = new BoolResult (booleanRes);
 		valor->setResult(boolresul);	
 
 	}else 
@@ -1925,7 +1981,7 @@ void FieldDeclNode::Interpretar()
 MethodDeclNode::MethodDeclNode(string name)
 {
 	methodName = name;
-
+	retorno = NULL;
 	block = NULL;
 }
 
@@ -1966,8 +2022,15 @@ void MethodDeclNode::validarSemantica()
 
 	this->actualTypeEnvironment->Put(this->methodName,funcion);
 	block->validarSemantica();
+
+	Procedure* procs = new Procedure(this);
+	Procedimientos[this->methodName] = procs; //acumular procedimientos en mapa global fuuu!!!
 }
 
+void MethodDeclNode::Interpretar()
+{
+	this->block->Exec();
+}
 #pragma endregion
 
 #pragma region ProgramNode
@@ -2308,6 +2371,10 @@ Result* BoolResult::getValue()
 	return new BoolResult(value);
 }
 
+int BoolResult::getTipo()
+{
+	return TipoResult::ResultBoolean;
+}
 void BoolResult::Print()
 {
 	cout<<this->value<<endl;
@@ -2378,4 +2445,26 @@ bool PilaEntornos::Exists(string key)
 	}
  	return false;
 }
+#pragma endregion
+
+#pragma region Procedure
+
+Procedure::Procedure(MethodDeclNode* metodo)
+{
+	this->metodo = metodo;
+}
+
+/*EntornoVariables* Procedure::getEnvironment()
+{
+	EntornoVariables* retorno = new EntornoVariables();
+
+	for(int x=0;this->metodo->methodArguments.size();x++)
+	{
+		this->metodo->methodArguments.at(x) = NULL;
+		retorno->tablaVariables.at(x) = NULL;
+	}
+
+	return retorno;
+}*/
+
 #pragma endregion

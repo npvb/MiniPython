@@ -1,13 +1,10 @@
 class GreatestCommonDivisor:
-	a = 10
-	b = 20
-
 	def gcd (a, b):
 		a = b*10
+		print a
 		return a
 
 	def main:
 		x = 12
 		y = 1
-		x = false
 		gcd (x,y)

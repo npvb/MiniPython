@@ -25,6 +25,7 @@ int main()
 			ASTNode *prgm = par.program();
 			ProgramNode* programnode = dynamic_cast<ProgramNode*>(prgm);
 			programnode->validarSemantica();
+			programnode->Interpretar();
 			//cout << endl << endl << prgm->ToString() << endl << endl ; 
 		}
 

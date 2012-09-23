@@ -146,8 +146,8 @@ public:
 		
 		switch(token.Tipo)
 		{
-			case TokenType::OP_AND:
-			case TokenType::OP_OR:
+			//case TokenType::OP_AND:
+			//case TokenType::OP_OR:
 			case TokenType::OP_NOT:
 				return true;
 
@@ -743,7 +743,7 @@ public:
 			throw PythonError("lvalue",e);
         }
 	}
-
+	
 	Expr* expr()
 	{
 		try
@@ -754,7 +754,7 @@ public:
 					|| token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ || token.getTipo() == TokenType::LIT_CADENA 
 					|| Numero() || Boolean())
 				{
-					return Relacional();
+					return Logical();
 				}
 
 				#pragma region - <expr> & ~ <expr>
@@ -780,6 +780,41 @@ public:
         {
 			throw PythonError("expr",e);
         }
+	}
+
+	Expr* Logical()
+	{
+		try
+		{
+			Expr* relacional1 = Relacional();
+
+			while(token.getTipo() == TokenType::OP_AND || token.getTipo() == TokenType::OP_OR)
+			{
+				switch(token.Tipo)
+				{
+					case TokenType::OP_OR:
+						token = lex->NextToken();
+						relacional1 = new OrExpr(relacional1,Relacional());
+						break;
+
+					case TokenType::OP_AND:
+						token = lex->NextToken();
+						relacional1 = new AndExpr(relacional1,Relacional());
+						break;
+					
+
+					default:
+						continue;
+				}
+			}
+
+			return relacional1;
+
+		}catch (char* e)
+        {
+			throw PythonError("Logical",e);
+        }
+		
 	}
 
 	Expr* Relacional()
@@ -837,15 +872,11 @@ public:
 		{
 			Expr* produccion1 = Produccion();
 
-			while(token.getTipo() == TokenType::OP_OR || token.getTipo() == TokenType::OP_REST || token.getTipo() == TokenType::OP_SUM)
+			while(token.getTipo() == TokenType::OP_REST || token.getTipo() == TokenType::OP_SUM)
 			{
 				switch(token.Tipo)
 				{
-				case TokenType::OP_OR:
-					token = lex->NextToken();
-					produccion1 = new OrExpr(produccion1,Produccion());
-					break;
-
+				
 				case TokenType::OP_REST:
 					token = lex->NextToken();
 					produccion1 = new RestaExpr(produccion1,Produccion());
@@ -876,8 +907,7 @@ public:
 		{
 			Expr *shift1 = Shift();
 
-			while(token.getTipo() == TokenType::OP_DIV || token.getTipo() == TokenType::OP_MULT || token.getTipo() == TokenType::OP_MOD
-				|| token.getTipo() == TokenType::OP_AND)
+			while(token.getTipo() == TokenType::OP_DIV || token.getTipo() == TokenType::OP_MULT || token.getTipo() == TokenType::OP_MOD)
 			{
 				switch(token.Tipo)
 				{
@@ -894,11 +924,6 @@ public:
 				case TokenType::OP_MOD:
 					token = lex->NextToken();
 					shift1 = new ModExpr(shift1,Shift());
-					break;
-
-				case TokenType::OP_AND:
-					token = lex->NextToken();
-					shift1 = new AndExpr(shift1,Shift());
 					break;
 
 				default:

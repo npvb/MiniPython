@@ -125,12 +125,11 @@ Tipo* MayorExpr:: validarSemantica()
 }
 
 Result* MayorExpr::Evaluate()
-{
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
+{	
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
-	
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());	
 
-	return new BoolResult(r_der->value > r_izq->value);
+	return new BoolResult(r_izq->value > r_der->value);
 }
 #pragma endregion
 
@@ -181,11 +180,10 @@ Tipo* MenorExpr::validarSemantica()
 
 Result* MenorExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
-	
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());	
 
-	return new BoolResult(r_der->value < r_izq->value);
+	return new BoolResult(r_izq->value < r_der->value);
 }
 #pragma endregion
 
@@ -235,11 +233,11 @@ Tipo* MayorIgualExpr::validarSemantica()
 
 Result* MayorIgualExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	
 
-	return new BoolResult(r_der->value >= r_izq->value);
+	return new BoolResult(r_izq->value >= r_der->value);
 }
 
 #pragma endregion
@@ -291,11 +289,10 @@ Tipo* MenorIgualExpr::validarSemantica()
 
 Result* MenorIgualExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
-	
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());	
 
-	return new BoolResult(r_der->value <= r_izq->value);
+	return new BoolResult(r_izq->value <= r_der->value);
 }
 
 #pragma endregion
@@ -346,8 +343,8 @@ Tipo* DistintoExpr::validarSemantica()
 
 Result* DistintoExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	
 
 	return new BoolResult(r_der->value != r_izq->value);
@@ -401,11 +398,10 @@ Tipo* IgualExpr::validarSemantica()
 
 Result* IgualExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
-	
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());	
 
-	return new BoolResult(r_der->value == r_izq->value);
+	return new BoolResult(r_izq->value == r_der->value);
 }
 #pragma endregion
 
@@ -456,11 +452,10 @@ Tipo* ModExpr::validarSemantica()
 
 Result* ModExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
-	
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());	
 
-	return new IntResult(r_der->value % r_izq->value);
+	return new IntResult(r_izq->value % r_der->value);
 }
 
 #pragma endregion
@@ -516,11 +511,10 @@ Tipo* AndExpr::validarSemantica()
 
 Result* AndExpr::Evaluate()
 {
-	BoolResult* r_der = dynamic_cast<BoolResult*>(expr_der->Evaluate());
 	BoolResult* r_izq = dynamic_cast<BoolResult*>(expr_izq->Evaluate());
-	
+	BoolResult* r_der = dynamic_cast<BoolResult*>(expr_der->Evaluate());	
 
-	return new BoolResult(r_der->value && r_izq->value);
+	return new BoolResult(r_izq->value && r_der->value);
 }
 #pragma endregion
 
@@ -575,11 +569,11 @@ Tipo* OrExpr::validarSemantica()
 
 Result* OrExpr::Evaluate()
 {
-	BoolResult* r_der = dynamic_cast<BoolResult*>(expr_der->Evaluate());
 	BoolResult* r_izq = dynamic_cast<BoolResult*>(expr_izq->Evaluate());
+	BoolResult* r_der = dynamic_cast<BoolResult*>(expr_der->Evaluate());
 	
 
-	return new BoolResult(r_der->value || r_izq->value);
+	return new BoolResult(r_izq->value || r_der->value);
 }
 
 #pragma endregion
@@ -632,11 +626,10 @@ Tipo* SumaExpr::validarSemantica()
 
 Result* SumaExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
-	
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 
-	return new IntResult(r_der->value + r_izq->value);
+	return new IntResult(r_izq->value + r_der->value);
 }
 #pragma endregion
 
@@ -687,11 +680,11 @@ Tipo* RestaExpr::validarSemantica()
 
 Result* RestaExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	
 
-	return new IntResult(r_der->value - r_izq->value);
+	return new IntResult(r_izq->value - r_der->value);
 }
 #pragma endregion
 
@@ -742,14 +735,14 @@ Tipo* DivisionExpr::validarSemantica()
 
 Result* DivisionExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	
 	if(r_izq->value == 0)
 	{
 		throw ASTError("DivisionExpr","No se Puede Dividir entre 0");
 	}else
-		return new IntResult(r_der->value / r_izq->value);
+		return new IntResult(r_izq->value / r_der->value);
 }
 #pragma endregion
 
@@ -800,11 +793,10 @@ Tipo* MultiplicacionExpr::validarSemantica()
 
 Result* MultiplicacionExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
-	
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());	
 
-	return new IntResult(r_der->value * r_izq->value);
+	return new IntResult(r_izq->value * r_der->value);
 }
 #pragma endregion
 
@@ -855,11 +847,11 @@ Tipo* ShiftLeftExpr::validarSemantica()
 
 Result* ShiftLeftExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	
 
-	return new IntResult(r_der->value << r_izq->value);
+	return new IntResult(r_izq->value << r_der->value);
 }
 
 #pragma endregion
@@ -911,11 +903,11 @@ Tipo* ShiftRightExpr::validarSemantica()
 
 Result* ShiftRightExpr::Evaluate()
 {
-	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
+	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	
 
-	return new IntResult(r_der->value >> r_izq->value);
+	return new IntResult(r_izq->value >> r_der->value);
 }
 #pragma endregion
 
@@ -1302,7 +1294,9 @@ Result* MethodCallExpr::Evaluate()
 	p->metodo->block->Exec();
 	pilaEntornoActual.pop();
 
-	return p->metodo->retorno;
+	Result* ret = p->metodo->retorno;
+	p->metodo->retorno = NULL;
+	return ret;
 }
 #pragma endregion
 

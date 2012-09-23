@@ -1661,7 +1661,7 @@ ForStatement::ForStatement(string vName)
 
 string ForStatement::ToString()
 {
-	string retorno = "for (" + varname + " in " + exprInicial->ToString() + " .. " + exprFinal->ToString() + "):\n";
+	string retorno = "for (" + varname + " in " + exprInicial->ToString() + " ... " + exprFinal->ToString() + "):\n";
 	retorno += block->ToString();
 
 	return retorno;
@@ -1681,6 +1681,9 @@ void ForStatement::validarSemantica()
 			} else
 				throw ASTError("ForStatement","El Tipo de la Variable "+varname+" del For debe ser Entera");
 		}
+	}else{
+		block->actualTypeEnvironment->Put(varname,new Entero());
+	}
 
 		Tipo *rango_init = exprInicial->validarSemantica();
 		Tipo *rango_end = exprFinal->validarSemantica();
@@ -1710,16 +1713,12 @@ void ForStatement::validarSemantica()
 			else
 				throw ASTError("ForStatement","El Tipo del Rango Inicial y el Rango Final deben ser Enteros");
 		}
-	}else{
-		block->actualTypeEnvironment->Put(varname,new Entero());
-	}
 }
 
 void ForStatement::Exec()
 {
 	IDExpr* variable = new IDExpr(varname);
 	IntResult* valorExpInicial = dynamic_cast<IntResult*>(exprInicial->Evaluate());
-	IntResult* valorExpFinal = dynamic_cast<IntResult*>(exprFinal->Evaluate());
 
 	if(pilaEntornoActual.Exists(varname))
 	{
@@ -1732,11 +1731,12 @@ void ForStatement::Exec()
 		pilaEntornoActual.put(varname,var);
 	}
 	
+	IntResult* valorExpFinal = dynamic_cast<IntResult*>(exprFinal->Evaluate());
 	IntResult* valorVariable = dynamic_cast<IntResult*>(variable->Evaluate());
 	
-	if(valorExpInicial->value < valorExpFinal->value)
+	if(valorExpInicial->value <= valorExpFinal->value)
 	{
-		while(valorVariable->value < valorExpFinal->value )
+		while(valorVariable->value <= valorExpFinal->value )
 		{
 			block->Exec();
 			valorVariable->value++;
@@ -1929,10 +1929,16 @@ void PrintStatement::validarSemantica()
 
 void PrintStatement::Exec()
 {
-	for(int x=0;x<printlist.size();x++)
+	if(printlist.size() > 1)
 	{
-		printlist.at(x)->Evaluate()->Print();
-	}
+
+		for(int x=0;x<printlist.size();x++)
+		{
+			printlist.at(x)->Evaluate()->Print();
+			cout<<endl;
+		}
+	}else
+		printlist.at(0)->Evaluate()->Print();
 }
 #pragma endregion
 
@@ -2302,7 +2308,7 @@ Tipo* EntornoTipos:: get(string key)
 		}
 	}
  	string msg;
-	msg="Variable "+key+" No Existe \n";
+	msg="Entorno Tipos->Variable "+key+" No Existe \n";
 	throw exception(msg.c_str());
 } 
 
@@ -2345,7 +2351,7 @@ IntResult::IntResult(int val)
 
 void IntResult::Print()
 {
-	cout<<this->value<<endl;
+	cout<<this->value;
 }
 
 Result* IntResult::getValue()
@@ -2374,7 +2380,7 @@ int BoolResult::getTipo()
 }
 void BoolResult::Print()
 {
-	cout<<this->value<<endl;
+	cout<<this->value;
 }
 /*int IntResult::getTipo()
 {
@@ -2398,7 +2404,7 @@ int CharResult::getTipo()
 
 void CharResult::Print()
 {
-	cout<<this->value<<endl;
+	cout<<this->value;
 }
 
 void PilaEntornos::push(EntornoVariables* entvar)
@@ -2427,7 +2433,7 @@ Variable* PilaEntornos::get(string key)
 	}
 
 	string msg;
-	msg="Variable "+key+" No Existe! \n";
+	msg="Pila de Entornos->Variable "+key+" No Existe! \n";
 	throw exception(msg.c_str());
 }
 

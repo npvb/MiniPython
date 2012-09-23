@@ -333,29 +333,37 @@ public:
 
 				#pragma region CASE 5
 				case 5:
-					if(isalpha(simbolo) || isdigit(simbolo) || simbolo == '_' || simbolo == '*')
+					if(simbolo == '\"')
+					{
+						return Token("",TokenType::LIT_CADENA,fila,columna);
+					}else if (simbolo == '\0')
+					{
+						throw exception ("Caracter Invalido en Literal String o Falta Cierre Literal String");
+					}else
 					{
 						estado = 6;
 						lexema+=simbolo;
 						simbolo = NextSymbol();
-					}else
-						throw exception ("Caracter Invalido en Literal String");break;
+					}break;
+
 				#pragma endregion STRINGS
 
 				#pragma region CASE 6
 				case 6:
-					if(isalpha(simbolo) || isdigit(simbolo) || simbolo == '_' || simbolo == ' ' || simbolo == ':')
+					if(simbolo == '\"')
+					{
+						estado = 7;
+						simbolo = NextSymbol();
+
+					}else if(simbolo == '\0')
+					{
+						throw exception ("Caracter Invalido o Falta Cierre del Literal String");
+					}else
 					{
 						estado = 6;
 						lexema+=simbolo;
 						simbolo = NextSymbol();
-
-					}else if(simbolo == '\"')
-					{
-						estado = 7;
-						simbolo = NextSymbol();
-					}else
-						throw exception ("Caracter Invalido o Falta Cierre del Literal String");
+					}
 					break;
 				#pragma endregion STRINGS
 

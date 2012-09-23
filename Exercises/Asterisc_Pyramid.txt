@@ -1,17 +1,15 @@
 class Asteriscos:
 	def main:
-		size = 0
-		print "Ingrese tamano del triangulo"
-		read size
+		n = 1
+		fila = 1
+		col = 1
+		
+		print "Tamanio de la Piramide: "
+		read n
 
-		for i in 0...size:
-			for j in size ... j-1:
-				if i < j:
-					print "_"
-				else:
-					print "*"
-			for x in 0...size:
-					if x>i:
-						print "_"
-					else:
-						print "*"
+		for fila in 1...n:
+			for col in 1...n-fila:
+				print " "
+			for col in 1...2*fila-1:
+				print "*"
+			print " ", " "

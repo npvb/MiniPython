@@ -1,17 +1,15 @@
-class Asteriscos:
-	def main:
-		size = 0
-		print "Ingrese tamano del triangulo"
-		read size
+class TablaMultiplicar:
+	
+	def mostrartabla(num):
+		inicio = num
+		fin = num * 12
 
-		for i in 0...size:
-			for j in size ... j-1:
-				if i < j:
-					print "_"
-				else:
-					print "*"
-			for x in 0...size:
-					if x>i:
-						print "_"
-					else:
-						print "*"
+		while inicio<=fin:
+			print inicio, " "
+			inicio = inicio + num
+		
+	def main:
+		x = 1
+		print "Ingrese Numero para Sacar Tabla de Multiplicar: "
+		read x
+		mostrartabla(x)

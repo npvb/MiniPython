@@ -1,0 +1,12 @@
+class TablaMultiplicar:
+	
+	def mostrartabla(num):
+		inicio = num
+		fin = num * 10
+
+		while inicio<=fin:
+			print inicio
+			inicio = inicio + num
+		
+	def main:
+		mostrartabla(3)	

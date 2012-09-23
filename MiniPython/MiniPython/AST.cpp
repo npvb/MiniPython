@@ -1636,11 +1636,14 @@ void WhileStatement::validarSemantica()
 
 void WhileStatement::Exec()
 {
-	BoolResult* wCondition = dynamic_cast<BoolResult*>(condition->Evaluate());
-
-	while(wCondition->value)
+	while(true/*wCondition->value*/)
 	{
-		block->Exec();
+		BoolResult* wCondition = dynamic_cast<BoolResult*>(condition->Evaluate());
+		if(wCondition->value)
+		{
+			block->Exec();
+		}else
+			break;
 	}
 
 }

@@ -333,7 +333,7 @@ public:
 
 				#pragma region CASE 5
 				case 5:
-					if(isalpha(simbolo) || isdigit(simbolo) || simbolo == '_')
+					if(isalpha(simbolo) || isdigit(simbolo) || simbolo == '_' || simbolo == '*')
 					{
 						estado = 6;
 						lexema+=simbolo;

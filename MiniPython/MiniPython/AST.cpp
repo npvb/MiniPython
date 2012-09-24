@@ -1633,6 +1633,7 @@ void IfStatement::Exec()
 
 			if(elifBlock_list.at(x)->ejecutado)
 			{
+				elifBlock_list.at(x)->ejecutado = false;
 				flag = true;
 				break;
 			}

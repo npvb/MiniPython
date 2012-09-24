@@ -31,7 +31,7 @@ int main()
 
 		if(par.token.getTipo() == TokenType::EOFF)
 		{
-			cout<<"Compilacion Exitosa!!"<<endl;
+			cout<< endl << endl << "Compilacion Exitosa!!"<<endl;
 		}
 	}catch(exception err){
 		cout<<err.what()<<endl;

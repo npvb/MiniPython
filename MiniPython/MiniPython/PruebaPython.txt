@@ -1,15 +1,4 @@
 class TablaMultiplicar:
-	
-	def mostrartabla(num):
-		inicio = num
-		fin = num * 12
-
-		while inicio<=fin:
-			print inicio, " "
-			inicio = inicio + num
-		
 	def main:
-		x = 1
-		print "Ingrese Numero para Sacar Tabla de Multiplicar: "
-		read x
-		mostrartabla(x)
+		x = [1,2,3,4,5,6]
+		print x

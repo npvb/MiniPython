@@ -61,6 +61,7 @@ public:
 			case TokenType::OP_MOD:
 			case TokenType::ID:
 			case TokenType::SIGNO_PARENTESIS_IZQ:
+			case TokenType::SIGNO_BRACKET_IZQ:
 
 			case TokenType::OP_MENOR:
 			case TokenType::OP_MENOR_IGUAL:
@@ -752,7 +753,7 @@ public:
 			{
 				if(token.getTipo() == TokenType::ID /*|| token.getTipo() == TokenType::KW_PRINT || token.getTipo() == TokenType::KW_READ*/
 					|| token.getTipo() == TokenType::SIGNO_PARENTESIS_IZQ || token.getTipo() == TokenType::LIT_CADENA 
-					|| Numero() || Boolean())
+					|| Numero() || Boolean() || token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
 				{
 					return Logical();
 				}
@@ -994,8 +995,31 @@ public:
 			{
 				IDExpr *id = new IDExpr(token.lexema);
 				return exprP(id);
-			}else
+
+			}else if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
+			{
+				token = lex->NextToken();
+				Expr * e1 = expr();
+
+				ArrayInitializer* arrInit = new ArrayInitializer();
+				arrInit->arregloExpr.push_back(e1);
+
+				while(token.getTipo() == TokenType::SIGN_COMA)
+				{
+					token = lex->NextToken();
+					arrInit->arregloExpr.push_back(expr());
+				}
+
+				if(token.getTipo() == TokenType::SIGNO_BRACKET_DER)
+				{
+					token = lex->NextToken();
+				}else
+					PythonError("Term","Se Esperaba ]");
+
+				return arrInit;
+			}else{
 				PythonError("Term","Se Esperaba Termino");
+			}
 
 		}catch(char* e)
         {
@@ -1011,8 +1035,8 @@ public:
 			
 				if(token.getTipo() == TokenType::SIGNO_BRACKET_IZQ)
 				{
+					token = lex->NextToken();
 					ArrayExpr *arreglo = new ArrayExpr(inherit->varname,expr());
-					//expr();
 
 					if(token.getTipo() == TokenType::SIGNO_BRACKET_DER)
 					{

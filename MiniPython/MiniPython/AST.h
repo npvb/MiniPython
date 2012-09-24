@@ -204,6 +204,16 @@ public:
 	Tipo *validarSemantica();
 	Result* Evaluate();
 };
+
+class ArrayInitializer : public Expr
+{
+public:
+	ArrayInitializer(){}
+	vector<Expr*> arregloExpr;
+	string ToString();
+	Tipo *validarSemantica();
+	Result* Evaluate();
+};
 #pragma endregion
 
  #pragma region UnaryOp
@@ -674,7 +684,7 @@ public:
 
 enum TipoResult
 {
-	ResultEntero,ResultCharacter,ResultBoolean
+	ResultEntero,ResultCharacter,ResultBoolean,ResultArray
 };
 
 class Result
@@ -710,6 +720,16 @@ class CharResult:public Result
 public:
 	string value;
 	CharResult(string val);
+	Result* getValue();
+	int getTipo();
+	void Print();
+};
+
+class ArrayResult:public Result
+{
+public:
+	vector<Result*> value;
+	ArrayResult(){}
 	Result* getValue();
 	int getTipo();
 	void Print();

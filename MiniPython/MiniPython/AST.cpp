@@ -911,6 +911,45 @@ Result* ShiftRightExpr::Evaluate()
 }
 #pragma endregion
 
+#pragma region ArrayInitializer
+string ArrayInitializer::ToString()
+{
+	return "Arreglo";
+}
+
+Tipo* ArrayInitializer::validarSemantica()
+{
+	Tipo *t = arregloExpr.at(0)->validarSemantica();
+	
+	Arreglo *arr = new Arreglo();
+
+	for(int x=0;x<arregloExpr.size();x++)
+	{
+		Tipo* t2 = arregloExpr.at(x)->validarSemantica();
+		
+		if(!t->EsEquivalente(t2))
+		{
+			ASTError("ArrayInitializer","Tipo del Arreglo no es Equivalente");
+		}
+	}
+
+	arr->arraytype = t;
+	arr->tamaño = arregloExpr.size();
+
+	return arr;
+}
+
+Result* ArrayInitializer::Evaluate()
+{
+	ArrayResult* ar = new ArrayResult();
+
+	for(int x = 0;x < this->arregloExpr.size();x++)
+	{
+		ar->value.push_back(arregloExpr.at(x)->Evaluate());
+	}
+	return ar;
+}
+#pragma endregion
 #pragma endregion
 
 #pragma region UnaryOp
@@ -1186,25 +1225,41 @@ string ArrayExpr::ToString()
 
 void ArrayExpr::SetTipo(Tipo *t)
 {
-	Tipo* tl = this->actualTypeEnvironment->get(varname);
-	
-	if(tl->getTipo()==Types::arreglo)
+	if (!this->actualTypeEnvironment->Exists(varname))
 	{
-		Arreglo* arr = dynamic_cast<Arreglo*>(tl);
-
-		arr->arraytype = t;
-	}else
-		throw ASTError("ArrayExpr",varname+" no es de Tipo Arreglo");
+		throw ASTError("ArrayExpr",varname+" no existe!");
+	}
 }
 
 Result* ArrayExpr::Evaluate()
 {
-	throw ASTError("ArrayExpr","NO IMPLEMENTADO");
-}
+	Result* r = pilaEntornoActual.get(varname)->value;
+	ArrayResult* ar = dynamic_cast<ArrayResult*>(r);
+
+	IntResult* indexResult = dynamic_cast<IntResult*>(this->index->Evaluate());
+
+	if(indexResult->value > ar->value.size()-1)
+	{
+		throw ASTError("ArrayExpr","Indice fuera del Límite del Arreglo");
+	}else
+	{
+		return ar->value.at(indexResult->value);
+	}
+
+}	
 
 void ArrayExpr::setResult(Result* r)
 {
-	throw ASTError("ArrayExpr","NO IMPLEMENTADO");
+	if (pilaEntornoActual.Exists(this->varname))
+	{
+		Variable* var = pilaEntornoActual.get(this->varname);
+		ArrayResult *ar = dynamic_cast<ArrayResult *>(var->value);
+
+		IntResult *arrindex = dynamic_cast<IntResult *>(index->Evaluate());
+
+		ar->value[arrindex->value] = r;
+	}else
+		throw ASTError("ArrayExpr", "Arreglo no inicializado");
 }
 #pragma endregion
 
@@ -1411,9 +1466,7 @@ void AssignStatement::Exec()
 	LValueExpr* lv = dynamic_cast<LValueExpr*>(this->leftValue);
 	Result* r_der = this->rightValue->Evaluate();
 
-	lv->setResult(r_der);
-	
-
+	lv->setResult(r_der->getValue());
 }
 
 #pragma endregion
@@ -2382,10 +2435,31 @@ void BoolResult::Print()
 {
 	cout<<this->value;
 }
-/*int IntResult::getTipo()
+
+int ArrayResult::getTipo()
 {
-	return TipoResult::ResultBoolean;
-}*/
+	return TipoResult::ResultArray;
+}
+
+void ArrayResult::Print()
+{
+	for (int x=0;x<value.size();x++)
+	{
+		value[x]->getValue()->Print();
+
+		if (x < value.size() - 1)
+			cout <<", ";
+	}
+}
+
+Result* ArrayResult::getValue()
+{
+	ArrayResult *arr = new ArrayResult();
+
+	arr->value = this->value;
+
+	return arr;
+}
 
 CharResult::CharResult(string val)
 {

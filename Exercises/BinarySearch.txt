@@ -1,0 +1,37 @@
+class BubbleSort:
+	arreglo=[70, 40,90,60, 80, 100,900, 34, 98, 120, 109, 14]
+
+	def BubbleSort:
+		aux=0
+		print "Arreglo Antes de Ordenar-> ",arreglo," "
+		for x in 0...11:
+			for y in 1...11:
+				aux = arreglo[y]
+				if arreglo[y] < arreglo[y-1]:
+					arreglo[y] = arreglo[y-1]
+					arreglo[y-1] = aux
+
+		print "Arreglo Despues de Ordenar->",arreglo
+
+	def BinarySearch(v):
+		i = 0
+		j = 11
+
+		while i!=j+1:
+			m = (i+j)/2
+			if arreglo[m]<v:
+				i = m+1
+			else:
+				j = m-1
+		if arreglo[i] == v:
+			print "Encontrado en ", i
+		else:
+			print "Numero No Encontrado"
+	
+
+	def main:
+		numerobusqueda = 0
+		BubbleSort()
+		print " ","BusquedaBinaria---Ingrese Numero a Buscar: "
+		read numerobusqueda
+		BinarySearch(numerobusqueda)

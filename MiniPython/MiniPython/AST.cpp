@@ -738,7 +738,7 @@ Result* DivisionExpr::Evaluate()
 	IntResult* r_izq = dynamic_cast<IntResult*>(expr_izq->Evaluate());
 	IntResult* r_der = dynamic_cast<IntResult*>(expr_der->Evaluate());
 	
-	if(r_izq->value == 0)
+	if(r_der->value == 0)
 	{
 		throw ASTError("DivisionExpr","No se Puede Dividir entre 0");
 	}else

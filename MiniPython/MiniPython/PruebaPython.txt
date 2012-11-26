@@ -1,9 +1,9 @@
-class CountDown:
-	def SumTo(nValue):
-		if nValue <=1:
-			return nValue
+class Fibonacci:
+	def suma(a):
+		if a == 1 or a == 0:
+			return 1
 		else:
-			return SumTo(nValue - 1) + nValue
+			return suma(a-1) + suma(a-2)
 
 	def main:
-		print "Resultado: ", SumTo(5)
+		print suma(1)

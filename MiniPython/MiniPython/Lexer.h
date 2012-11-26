@@ -500,8 +500,10 @@ public:
 							Pila_Identacion.push_back(nivelIdentacion);
 							nivelIdentacion = 0;
 							estado = 0;
+							
 							return Token("INDENT",TokenType::OP_IDENT,fila,columna);
 
+							
 						}else if (nivelIdentacion < Pila_Identacion.back())
 						{								
 							int pos = 0;
